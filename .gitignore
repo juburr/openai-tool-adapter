@@ -1,0 +1,6 @@
+# Testing artifacts
+coverage.out
+coverage.html
+
+# Fuzzing artifacts
+testdata/

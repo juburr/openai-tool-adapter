@@ -1,0 +1,33 @@
+version: 2.1
+
+jobs:
+  go_tests:
+    docker:
+      - image: cimg/go:1.24
+    working_directory: ~/project
+    steps:
+      - checkout
+      - run:
+          name: Install dependencies
+          command: go mod download -x
+      - run:
+          name: Run go fmt
+          command: go fmt ./...
+      - run:
+          name: Run go vet
+          command: go vet ./...
+      - run:
+          name: Run tests
+          command: go test -race -coverprofile=coverage.out ./...
+      - run:
+          name: Run benchmarks
+          command: go test -bench=. -benchmem ./...
+      - run:
+          name: Check modules
+          command: go mod tidy -diff || (echo "go modules are not tidy" && exit 1)
+
+workflows:
+  version: 2
+  on_commit:
+    jobs:
+      - go_tests
