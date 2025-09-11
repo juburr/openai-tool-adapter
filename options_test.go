@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
+	tooladapter "github.com/juburr/openai-tool-adapter"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -166,24 +166,21 @@ func createMockRequestWithTools() openai.ChatCompletionNewParams {
 			openai.UserMessage("Test message"),
 		},
 		Model: openai.ChatModelGPT4o,
-		Tools: []openai.ChatCompletionToolParam{
-			{
-				Type: "function",
-				Function: openai.FunctionDefinitionParam{
-					Name:        "test_function",
-					Description: openai.String("A test function"),
-					Parameters: openai.FunctionParameters{
-						"type": "object",
-						"properties": map[string]interface{}{
-							"message": map[string]interface{}{
-								"type":        "string",
-								"description": "The message to process",
-							},
+		Tools: []openai.ChatCompletionToolUnionParam{
+			openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+				Name:        "test_function",
+				Description: openai.String("A test function"),
+				Parameters: openai.FunctionParameters{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"message": map[string]interface{}{
+							"type":        "string",
+							"description": "The message to process",
 						},
-						"required": []string{"message"},
 					},
+					"required": []string{"message"},
 				},
-			},
+			}),
 		},
 	}
 }
@@ -243,8 +240,8 @@ func TestBufferConfigurationOptions(t *testing.T) {
 		)
 
 		// Create a tool that should be within the threshold
-		smallTool := openai.ChatCompletionToolParam{
-			Function: openai.FunctionDefinitionParam{
+		smallTool := openai.ChatCompletionFunctionTool(
+			openai.FunctionDefinitionParam{
 				Name:        "small_function",
 				Description: openai.String("Small function for testing"),
 				Parameters: map[string]interface{}{
@@ -257,12 +254,12 @@ func TestBufferConfigurationOptions(t *testing.T) {
 					},
 				},
 			},
-		}
+		)
 
 		req := openai.ChatCompletionNewParams{
 			Model:    "gpt-4",
 			Messages: []openai.ChatCompletionMessageParamUnion{openai.UserMessage("Test")},
-			Tools:    []openai.ChatCompletionToolParam{smallTool},
+			Tools:    []openai.ChatCompletionToolUnionParam{smallTool},
 		}
 
 		// Process multiple requests to exercise buffer pool
@@ -282,12 +279,12 @@ func TestBufferConfigurationOptions(t *testing.T) {
 		req := openai.ChatCompletionNewParams{
 			Model:    "gpt-4",
 			Messages: []openai.ChatCompletionMessageParamUnion{openai.UserMessage("Test")},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Function: openai.FunctionDefinitionParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(
+					openai.FunctionDefinitionParam{
 						Name: "test_function",
 					},
-				},
+				),
 			},
 		}
 
@@ -309,8 +306,8 @@ func TestBufferConfigurationOptions(t *testing.T) {
 		)
 
 		// Test with both streaming and non-streaming requests
-		tool := openai.ChatCompletionToolParam{
-			Function: openai.FunctionDefinitionParam{
+		tool := openai.ChatCompletionFunctionTool(
+			openai.FunctionDefinitionParam{
 				Name:        "combined_test",
 				Description: openai.String("Test function for combined buffer options"),
 				Parameters: map[string]interface{}{
@@ -323,12 +320,12 @@ func TestBufferConfigurationOptions(t *testing.T) {
 					},
 				},
 			},
-		}
+		)
 
 		req := openai.ChatCompletionNewParams{
 			Model:    "gpt-4",
 			Messages: []openai.ChatCompletionMessageParamUnion{openai.UserMessage("Test combined options")},
-			Tools:    []openai.ChatCompletionToolParam{tool},
+			Tools:    []openai.ChatCompletionToolUnionParam{tool},
 		}
 
 		// Test non-streaming request
@@ -366,8 +363,8 @@ func TestBufferConfigurationOptions(t *testing.T) {
 
 		// Create content that will exceed the small limits
 		largeDescription := strings.Repeat("Large content for testing buffer limits. ", 50) // ~2KB
-		largeTool := openai.ChatCompletionToolParam{
-			Function: openai.FunctionDefinitionParam{
+		largeTool := openai.ChatCompletionFunctionTool(
+			openai.FunctionDefinitionParam{
 				Name:        "large_test_function",
 				Description: openai.String(largeDescription),
 				Parameters: map[string]interface{}{
@@ -380,12 +377,12 @@ func TestBufferConfigurationOptions(t *testing.T) {
 					},
 				},
 			},
-		}
+		)
 
 		req := openai.ChatCompletionNewParams{
 			Model:    "gpt-4",
 			Messages: []openai.ChatCompletionMessageParamUnion{openai.UserMessage("Test with large content")},
-			Tools:    []openai.ChatCompletionToolParam{largeTool},
+			Tools:    []openai.ChatCompletionToolUnionParam{largeTool},
 		}
 
 		// Should still work despite exceeding limits (graceful handling)
@@ -861,13 +858,11 @@ func TestSystemMessageSupportOption(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("Test message"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Function: openai.FunctionDefinitionParam{
-						Name:        "test_func",
-						Description: openai.String("Test function"),
-					},
-				},
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+					Name:        "test_func",
+					Description: openai.String("Test function"),
+				}),
 			},
 		}
 
@@ -896,13 +891,11 @@ func TestSystemMessageSupportOption(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("Test message"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Function: openai.FunctionDefinitionParam{
-						Name:        "test_func",
-						Description: openai.String("Test function"),
-					},
-				},
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+					Name:        "test_func",
+					Description: openai.String("Test function"),
+				}),
 			},
 		}
 
@@ -946,13 +939,11 @@ func TestSystemMessageSupportOption(t *testing.T) {
 						openai.SystemMessage("System prompt"),
 						openai.UserMessage("Test message"),
 					},
-					Tools: []openai.ChatCompletionToolParam{
-						{
-							Function: openai.FunctionDefinitionParam{
-								Name:        "test_func",
-								Description: openai.String("Test function"),
-							},
-						},
+					Tools: []openai.ChatCompletionToolUnionParam{
+						openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+							Name:        "test_func",
+							Description: openai.String("Test function"),
+						}),
 					},
 				}
 
@@ -996,13 +987,11 @@ func TestSystemMessageSupportOption(t *testing.T) {
 
 				req := openai.ChatCompletionNewParams{
 					Messages: []openai.ChatCompletionMessageParamUnion{},
-					Tools: []openai.ChatCompletionToolParam{
-						{
-							Function: openai.FunctionDefinitionParam{
-								Name:        "test_func",
-								Description: openai.String("Test function"),
-							},
-						},
+					Tools: []openai.ChatCompletionToolUnionParam{
+						openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+							Name:        "test_func",
+							Description: openai.String("Test function"),
+						}),
 					},
 				}
 
@@ -1042,13 +1031,11 @@ func TestSystemMessageSupportOption(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("Test message"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Function: openai.FunctionDefinitionParam{
-						Name:        "test_func",
-						Description: openai.String("Test function"),
-					},
-				},
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+					Name:        "test_func",
+					Description: openai.String("Test function"),
+				}),
 			},
 		}
 

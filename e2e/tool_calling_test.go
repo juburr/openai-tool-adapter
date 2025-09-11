@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -19,7 +19,7 @@ func TestToolCallingNonStreaming(t *testing.T) {
 
 	t.Run("WeatherToolCall", func(t *testing.T) {
 		weatherTool := CreateWeatherTool()
-		request := client.CreateToolRequest("What's the weather like in San Francisco?", []openai.ChatCompletionToolParam{weatherTool})
+		request := client.CreateToolRequest("What's the weather like in San Francisco?", []openai.ChatCompletionToolUnionParam{weatherTool})
 
 		response, err := client.SendRequest(ctx, request)
 		require.NoError(t, err, "Weather tool request should not fail")
@@ -52,7 +52,7 @@ func TestToolCallingNonStreaming(t *testing.T) {
 
 	t.Run("CalculatorToolCall", func(t *testing.T) {
 		calcTool := CreateCalculatorTool()
-		request := client.CreateToolRequest("What is 25 multiplied by 4?", []openai.ChatCompletionToolParam{calcTool})
+		request := client.CreateToolRequest("What is 25 multiplied by 4?", []openai.ChatCompletionToolUnionParam{calcTool})
 
 		response, err := client.SendRequest(ctx, request)
 		require.NoError(t, err, "Calculator tool request should not fail")
@@ -86,7 +86,7 @@ func TestToolCallingNonStreaming(t *testing.T) {
 	t.Run("MultipleToolsAvailable", func(t *testing.T) {
 		weatherTool := CreateWeatherTool()
 		calcTool := CreateCalculatorTool()
-		tools := []openai.ChatCompletionToolParam{weatherTool, calcTool}
+		tools := []openai.ChatCompletionToolUnionParam{weatherTool, calcTool}
 
 		request := client.CreateToolRequest("What's the weather in Tokyo?", tools)
 
@@ -115,7 +115,7 @@ func TestToolCallingNonStreaming(t *testing.T) {
 
 	t.Run("AmbiguousRequestWithTools", func(t *testing.T) {
 		weatherTool := CreateWeatherTool()
-		request := client.CreateToolRequest("Tell me about your capabilities", []openai.ChatCompletionToolParam{weatherTool})
+		request := client.CreateToolRequest("Tell me about your capabilities", []openai.ChatCompletionToolUnionParam{weatherTool})
 
 		response, err := client.SendRequest(ctx, request)
 		require.NoError(t, err, "Ambiguous request should not fail")
@@ -137,7 +137,7 @@ func TestToolCallingNonStreaming(t *testing.T) {
 
 	t.Run("ToolCallWithSpecificUnits", func(t *testing.T) {
 		weatherTool := CreateWeatherTool()
-		request := client.CreateToolRequest("What's the weather in London in Fahrenheit?", []openai.ChatCompletionToolParam{weatherTool})
+		request := client.CreateToolRequest("What's the weather in London in Fahrenheit?", []openai.ChatCompletionToolUnionParam{weatherTool})
 
 		response, err := client.SendRequest(ctx, request)
 		require.NoError(t, err, "Specific units request should not fail")

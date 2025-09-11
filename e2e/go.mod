@@ -6,7 +6,7 @@ go 1.24.5
 
 require (
 	github.com/juburr/openai-tool-adapter v0.0.0
-	github.com/openai/openai-go v1.12.0
+	github.com/openai/openai-go/v2 v2.4.1
 	github.com/stretchr/testify v1.10.0
 )
 

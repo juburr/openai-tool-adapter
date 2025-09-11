@@ -9,8 +9,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
+	tooladapter "github.com/juburr/openai-tool-adapter"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -27,10 +27,9 @@ func TestIntegrationScenarios(t *testing.T) {
 				openai.UserMessage("Calculate the tax for someone earning $50000 in California"),
 			},
 			Model: openai.ChatModelGPT4o,
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(
+					openai.FunctionDefinitionParam{
 						Name:        "calculate_tax",
 						Description: openai.String("Calculate income tax based on salary and state"),
 						Parameters: openai.FunctionParameters{
@@ -48,7 +47,7 @@ func TestIntegrationScenarios(t *testing.T) {
 							"required": []string{"income", "state"},
 						},
 					},
-				},
+				),
 			},
 		}
 
@@ -104,10 +103,9 @@ func TestIntegrationScenarios(t *testing.T) {
 				openai.UserMessage("Get weather for Seattle and calculate travel time from there to Portland"),
 			},
 			Model: openai.ChatModelGPT4o,
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(
+					openai.FunctionDefinitionParam{
 						Name:        "get_weather",
 						Description: openai.String("Get current weather for a city"),
 						Parameters: openai.FunctionParameters{
@@ -120,10 +118,9 @@ func TestIntegrationScenarios(t *testing.T) {
 							},
 						},
 					},
-				},
-				{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
+				),
+				openai.ChatCompletionFunctionTool(
+					openai.FunctionDefinitionParam{
 						Name:        "calculate_travel_time",
 						Description: openai.String("Calculate travel time between two cities"),
 						Parameters: openai.FunctionParameters{
@@ -138,7 +135,7 @@ func TestIntegrationScenarios(t *testing.T) {
 							},
 						},
 					},
-				},
+				),
 			},
 		}
 
@@ -383,7 +380,7 @@ func TestRealWorldUsagePatterns(t *testing.T) {
 			tooladapter.WithToolPolicy(tooladapter.ToolDrainAll), // Use ToolDrainAll to get all tool calls
 		)
 
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createToolParam("get_weather", "Get weather information", map[string]interface{}{
 				"type": "object",
 				"properties": map[string]interface{}{
@@ -456,7 +453,7 @@ func TestRealWorldUsagePatterns(t *testing.T) {
 					openai.UserMessage(fmt.Sprintf("Process item %d", i)),
 				},
 				Model: openai.ChatModelGPT4o,
-				Tools: []openai.ChatCompletionToolParam{
+				Tools: []openai.ChatCompletionToolUnionParam{
 					createToolParam("process_item", "Process an item", map[string]interface{}{
 						"type": "object",
 						"properties": map[string]interface{}{
@@ -489,7 +486,7 @@ func TestRealWorldUsagePatterns(t *testing.T) {
 
 	t.Run("DynamicToolConfiguration", func(t *testing.T) {
 		// Test scenario where different requests use different tool sets
-		toolSets := [][]openai.ChatCompletionToolParam{
+		toolSets := [][]openai.ChatCompletionToolUnionParam{
 			// Basic tools
 			{createToolParam("basic_func", "Basic function", nil)},
 			// Extended tools
@@ -534,34 +531,26 @@ func createIntegrationTestRequest() openai.ChatCompletionNewParams {
 			openai.UserMessage("Test message for integration"),
 		},
 		Model: openai.ChatModelGPT4o,
-		Tools: []openai.ChatCompletionToolParam{
-			{
-				Type: "function",
-				Function: openai.FunctionDefinitionParam{
-					Name:        "test_func",
-					Description: openai.String("Test function for integration"),
-					Parameters: openai.FunctionParameters{
-						"type": "object",
-						"properties": map[string]interface{}{
-							"test": map[string]interface{}{
-								"type":        "string",
-								"description": "Test parameter",
-							},
-						},
+		Tools: []openai.ChatCompletionToolUnionParam{
+			createToolParam("test_func", "Test function for integration", openai.FunctionParameters{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"test": map[string]interface{}{
+						"type":        "string",
+						"description": "Test parameter",
 					},
 				},
-			},
+			}),
 		},
 	}
 }
 
-func createToolParam(name, description string, parameters map[string]interface{}) openai.ChatCompletionToolParam {
-	return openai.ChatCompletionToolParam{
-		Type: "function",
-		Function: openai.FunctionDefinitionParam{
+func createToolParam(name, description string, parameters map[string]interface{}) openai.ChatCompletionToolUnionParam {
+	return openai.ChatCompletionFunctionTool(
+		openai.FunctionDefinitionParam{
 			Name:        name,
 			Description: openai.String(description),
 			Parameters:  parameters,
 		},
-	}
+	)
 }

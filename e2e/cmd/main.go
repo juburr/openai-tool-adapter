@@ -11,8 +11,8 @@ import (
 	"log/slog"
 
 	tooladapter "github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 )
 
 type WeatherRequest struct {
@@ -47,10 +47,10 @@ func getWeather(location, unit string) WeatherResponse {
 	}
 }
 
-func createWeatherTool() openai.ChatCompletionToolParam {
-	return openai.ChatCompletionToolParam{
+func createWeatherTool() openai.ChatCompletionToolUnionParam {
+	return openai.ChatCompletionFunctionTool(
 		Type: "function",
-		Function: openai.FunctionDefinitionParam{
+		openai.FunctionDefinitionParam{
 			Name:        "get_weather",
 			Description: openai.String("Get current weather information for a specific location"),
 			Parameters: openai.FunctionParameters{
@@ -176,7 +176,7 @@ func main() {
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage("What's the weather like in San Francisco?"),
 		},
-		Tools: []openai.ChatCompletionToolParam{weatherTool},
+		Tools: []openai.ChatCompletionToolUnionParam{weatherTool},
 	}
 
 	printOriginalRequest(originalParams, *verbose)

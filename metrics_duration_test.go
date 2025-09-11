@@ -6,8 +6,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
+	tooladapter "github.com/juburr/openai-tool-adapter"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -24,7 +24,7 @@ func TestMetrics_DurationPrecisionAndConversion(t *testing.T) {
 	t.Run("NanosecondPrecisionCapture", func(t *testing.T) {
 		collector.Clear()
 
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("precision_test", "Test nanosecond precision"),
 		}
 		req := createMockRequestForMetrics(tools)
@@ -184,7 +184,7 @@ func TestMetrics_DurationPrecisionAndConversion(t *testing.T) {
 		)
 
 		// Generate multiple metric events
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("integration_test", "Test real-world integration"),
 		}
 		req := createMockRequestForMetrics(tools)
@@ -318,7 +318,7 @@ func TestMetrics_DurationBehaviorUnderLoad(t *testing.T) {
 		for i := 0; i < numIterations; i++ {
 			collector.Clear()
 
-			tools := []openai.ChatCompletionToolParam{
+			tools := []openai.ChatCompletionToolUnionParam{
 				createMockToolForMetrics(fmt.Sprintf("load_test_%d", i), "Load test tool"),
 			}
 			req := createMockRequestForMetrics(tools)

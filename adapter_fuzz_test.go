@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 )
 
 func FuzzTransformCompletionsResponse(f *testing.F) {
@@ -105,7 +105,7 @@ func validateFuzzToolCallsDetected(t *testing.T, choice openai.ChatCompletionCho
 }
 
 // validateFuzzSingleToolCall validates a single tool call from fuzzing
-func validateFuzzSingleToolCall(t *testing.T, toolCall openai.ChatCompletionMessageToolCall, index int) {
+func validateFuzzSingleToolCall(t *testing.T, toolCall openai.ChatCompletionMessageToolCallUnion, index int) {
 	// Basic field validation
 	if toolCall.Function.Name == "" {
 		t.Errorf("TransformCompletionsResponse produced tool call %d with empty function name", index)
@@ -151,20 +151,17 @@ func validateFuzzNoToolCalls(t *testing.T, choice openai.ChatCompletionChoice, o
 }
 
 // buildFuzzedTool creates a tool from fuzzed parameters
-func buildFuzzedTool(funcName, description string, hasParams bool) openai.ChatCompletionToolParam {
-	tool := openai.ChatCompletionToolParam{
-		Type: "function",
-		Function: openai.FunctionDefinitionParam{
-			Name: funcName,
-		},
+func buildFuzzedTool(funcName, description string, hasParams bool) openai.ChatCompletionToolUnionParam {
+	functionDef := openai.FunctionDefinitionParam{
+		Name: funcName,
 	}
 
 	if description != "" {
-		tool.Function.Description = openai.String(description)
+		functionDef.Description = openai.String(description)
 	}
 
 	if hasParams {
-		tool.Function.Parameters = openai.FunctionParameters{
+		functionDef.Parameters = openai.FunctionParameters{
 			"type": "object",
 			"properties": map[string]interface{}{
 				"test": map[string]interface{}{
@@ -174,7 +171,7 @@ func buildFuzzedTool(funcName, description string, hasParams bool) openai.ChatCo
 		}
 	}
 
-	return tool
+	return openai.ChatCompletionFunctionTool(functionDef)
 }
 
 // validateToolsRemoved checks that tools were properly removed from the result
@@ -230,7 +227,7 @@ func FuzzTransformCompletionsRequest(f *testing.F) {
 		adapter := New(WithLogLevel(slog.LevelError))
 
 		// Build a request with the fuzzed function definition
-		tools := []openai.ChatCompletionToolParam{}
+		tools := []openai.ChatCompletionToolUnionParam{}
 
 		// Only add the tool if the function name is not empty (to test various scenarios)
 		if funcName != "" {

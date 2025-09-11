@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 )
 
 // ChatCompletionStreamInterface represents the streaming interface returned by OpenAI SDK
@@ -761,7 +761,7 @@ func (s *StreamAdapter) handleCollectThenStopMode(chunk openai.ChatCompletionChu
 }
 
 // handleDrainAllMode handles ToolDrainAll policy - reads entire stream and collects all tools
-func (s *StreamAdapter) handleDrainAllMode(chunk openai.ChatCompletionChunk, content string) bool {
+func (s *StreamAdapter) handleDrainAllMode(_ openai.ChatCompletionChunk, content string) bool {
 	// In drain all mode, never emit content until the very end
 	s.contentSuppressed = true
 

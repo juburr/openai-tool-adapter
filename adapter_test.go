@@ -9,8 +9,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
+	tooladapter "github.com/juburr/openai-tool-adapter"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,7 +23,7 @@ import (
 // into messages according to the proper strategy (modify existing, not prepend new)
 func TestMessageInjectionStrategy(t *testing.T) {
 	adapter := tooladapter.New(tooladapter.WithLogLevel(slog.LevelError))
-	tools := []openai.ChatCompletionToolParam{
+	tools := []openai.ChatCompletionToolUnionParam{
 		createMockTool("test_func", "Test function"),
 	}
 
@@ -539,14 +539,13 @@ func getAssistantContent(msg openai.ChatCompletionMessageParamUnion) string {
 // TestSystemMessageSupportBehavior comprehensively tests the WithSystemMessageSupport option
 // and its impact on message injection strategies.
 func TestSystemMessageSupportBehavior(t *testing.T) {
-	tools := []openai.ChatCompletionToolParam{
-		{
-			Type: "function",
-			Function: openai.FunctionDefinitionParam{
+	tools := []openai.ChatCompletionToolUnionParam{
+		openai.ChatCompletionFunctionTool(
+			openai.FunctionDefinitionParam{
 				Name:        "test_func",
 				Description: openai.String("Test function"),
 			},
-		},
+		),
 	}
 
 	t.Run("SystemSupportEnabled_NoExistingSystem", func(t *testing.T) {
@@ -1036,7 +1035,7 @@ func TestNewAdapter_Configuration(t *testing.T) {
 		adapter := tooladapter.New(tooladapter.WithCustomPromptTemplate(customPrompt))
 		require.NotNil(t, adapter)
 
-		req := createMockRequest([]openai.ChatCompletionToolParam{
+		req := createMockRequest([]openai.ChatCompletionToolUnionParam{
 			createMockTool("test_func", "Test"),
 		})
 		res, err := adapter.TransformCompletionsRequest(req)
@@ -1051,7 +1050,7 @@ func TestNewAdapter_Configuration(t *testing.T) {
 		require.NotNil(t, adapter)
 
 		// Verify the transformation still works with custom logger
-		req := createMockRequest([]openai.ChatCompletionToolParam{
+		req := createMockRequest([]openai.ChatCompletionToolUnionParam{
 			createMockTool("test_func", "Test"),
 		})
 		res, err := adapter.TransformCompletionsRequest(req)
@@ -1083,7 +1082,7 @@ func TestTransformCompletionsRequest_ToolInjection(t *testing.T) {
 
 	t.Run("SingleToolInjection", func(t *testing.T) {
 		tool := createMockTool("get_weather", "Get weather for a location")
-		req := createMockRequest([]openai.ChatCompletionToolParam{tool})
+		req := createMockRequest([]openai.ChatCompletionToolUnionParam{tool})
 
 		result, err := adapter.TransformCompletionsRequest(req)
 		require.NoError(t, err)
@@ -1097,7 +1096,7 @@ func TestTransformCompletionsRequest_ToolInjection(t *testing.T) {
 	})
 
 	t.Run("MultipleToolInjection", func(t *testing.T) {
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockTool("get_weather", "Get weather data"),
 			createMockTool("get_time", "Get current time"),
 			createMockTool("calculate", "Perform calculations"),
@@ -1119,7 +1118,7 @@ func TestTransformCompletionsRequest_ToolInjection(t *testing.T) {
 				openai.SystemMessage(existingSystem),
 				openai.UserMessage("Hello"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
 				createMockTool("test_func", "Test function"),
 			},
 		}
@@ -1712,14 +1711,13 @@ func TestStateMachineParser_EdgeCases(t *testing.T) {
 
 	t.Run("EmptyToolDefinition", func(t *testing.T) {
 		// Test handling of tools with missing information
-		req := createMockRequest([]openai.ChatCompletionToolParam{
-			{
-				Type: "function",
-				Function: openai.FunctionDefinitionParam{
+		req := createMockRequest([]openai.ChatCompletionToolUnionParam{
+			openai.ChatCompletionFunctionTool(
+				openai.FunctionDefinitionParam{
 					Name:        "", // Empty name
 					Description: openai.String("A function with no name"),
 				},
-			},
+			),
 		})
 
 		// Should handle gracefully
@@ -1730,14 +1728,13 @@ func TestStateMachineParser_EdgeCases(t *testing.T) {
 
 	t.Run("ToolWithoutDescription", func(t *testing.T) {
 		// Test handling of tools without description
-		req := createMockRequest([]openai.ChatCompletionToolParam{
-			{
-				Type: "function",
-				Function: openai.FunctionDefinitionParam{
+		req := createMockRequest([]openai.ChatCompletionToolUnionParam{
+			openai.ChatCompletionFunctionTool(
+				openai.FunctionDefinitionParam{
 					Name: "no_desc_func",
 					// No description field
 				},
-			},
+			),
 		})
 
 		// Should handle gracefully
@@ -1749,7 +1746,7 @@ func TestStateMachineParser_EdgeCases(t *testing.T) {
 	t.Run("VeryLargeToolDefinition", func(t *testing.T) {
 		// Test handling of extremely large tool definitions
 		largeDescription := strings.Repeat("This is a very long description. ", 1000)
-		req := createMockRequest([]openai.ChatCompletionToolParam{
+		req := createMockRequest([]openai.ChatCompletionToolUnionParam{
 			createMockTool("large_function", largeDescription),
 		})
 
@@ -1760,7 +1757,7 @@ func TestStateMachineParser_EdgeCases(t *testing.T) {
 
 	t.Run("SpecialCharactersInToolDefinition", func(t *testing.T) {
 		// Test handling of special characters that might break JSON or parsing
-		req := createMockRequest([]openai.ChatCompletionToolParam{
+		req := createMockRequest([]openai.ChatCompletionToolUnionParam{
 			createMockTool("special_func", "Description with \"quotes\" and \n newlines and {braces}"),
 		})
 
@@ -1899,10 +1896,9 @@ func TestStrictModeSupport(t *testing.T) {
 
 	t.Run("StrictModeEnabled", func(t *testing.T) {
 		// Create a tool with strict mode enabled
-		tools := []openai.ChatCompletionToolParam{
-			{
-				Type: "function",
-				Function: openai.FunctionDefinitionParam{
+		tools := []openai.ChatCompletionToolUnionParam{
+			openai.ChatCompletionFunctionTool(
+				openai.FunctionDefinitionParam{
 					Name:        "strict_function",
 					Description: openai.String("Function with strict schema compliance"),
 					Strict:      openai.Bool(true), // Enable strict mode
@@ -1918,7 +1914,7 @@ func TestStrictModeSupport(t *testing.T) {
 						"additionalProperties": false,
 					},
 				},
-			},
+			),
 		}
 
 		request := openai.ChatCompletionNewParams{
@@ -1956,10 +1952,9 @@ func TestStrictModeSupport(t *testing.T) {
 
 	t.Run("StrictModeDisabled", func(t *testing.T) {
 		// Create a tool with strict mode disabled (default)
-		tools := []openai.ChatCompletionToolParam{
-			{
-				Type: "function",
-				Function: openai.FunctionDefinitionParam{
+		tools := []openai.ChatCompletionToolUnionParam{
+			openai.ChatCompletionFunctionTool(
+				openai.FunctionDefinitionParam{
 					Name:        "regular_function",
 					Description: openai.String("Regular function without strict mode"),
 					// Strict field not set (defaults to false)
@@ -1973,7 +1968,7 @@ func TestStrictModeSupport(t *testing.T) {
 						},
 					},
 				},
-			},
+			),
 		}
 
 		request := openai.ChatCompletionNewParams{
@@ -2011,10 +2006,9 @@ func TestStrictModeSupport(t *testing.T) {
 
 	t.Run("StrictModeExplicitlyDisabled", func(t *testing.T) {
 		// Create a tool with strict mode explicitly disabled
-		tools := []openai.ChatCompletionToolParam{
-			{
-				Type: "function",
-				Function: openai.FunctionDefinitionParam{
+		tools := []openai.ChatCompletionToolUnionParam{
+			openai.ChatCompletionFunctionTool(
+				openai.FunctionDefinitionParam{
 					Name:        "explicit_non_strict",
 					Description: openai.String("Function with strict explicitly disabled"),
 					Strict:      openai.Bool(false), // Explicitly disable strict mode
@@ -2027,7 +2021,7 @@ func TestStrictModeSupport(t *testing.T) {
 						},
 					},
 				},
-			},
+			),
 		}
 
 		request := openai.ChatCompletionNewParams{
@@ -2095,14 +2089,13 @@ func TestPromptInjectionRoleSelection(t *testing.T) {
 				openai.SystemMessage("Existing system guidance."),
 				openai.UserMessage("Hello"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(
+					openai.FunctionDefinitionParam{
 						Name:        "get_weather",
 						Description: openai.String("Get weather"),
 					},
-				},
+				),
 			},
 		}
 
@@ -2136,14 +2129,13 @@ func TestPromptInjectionRoleSelection(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("Hello"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(
+					openai.FunctionDefinitionParam{
 						Name:        "get_time",
 						Description: openai.String("Get time"),
 					},
-				},
+				),
 			},
 		}
 
@@ -2172,14 +2164,13 @@ func TestPromptInjectionRoleSelection(t *testing.T) {
 		req := openai.ChatCompletionNewParams{
 			Model:    openai.ChatModelGPT4o,
 			Messages: nil, // no messages
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(
+					openai.FunctionDefinitionParam{
 						Name:        "calc",
 						Description: openai.String("Calc"),
 					},
-				},
+				),
 			},
 		}
 
@@ -2204,10 +2195,9 @@ func TestToolResultHandling(t *testing.T) {
 	adapter := tooladapter.New(tooladapter.WithLogLevel(slog.LevelError))
 
 	// Helper function to create a test tool
-	createTestTool := func() openai.ChatCompletionToolParam {
-		return openai.ChatCompletionToolParam{
-			Type: "function",
-			Function: openai.FunctionDefinitionParam{
+	createTestTool := func() openai.ChatCompletionToolUnionParam {
+		return openai.ChatCompletionFunctionTool(
+			openai.FunctionDefinitionParam{
 				Name:        "get_weather",
 				Description: openai.String("Get weather for a location"),
 				Parameters: openai.FunctionParameters{
@@ -2217,7 +2207,7 @@ func TestToolResultHandling(t *testing.T) {
 					},
 				},
 			},
-		}
+		)
 	}
 
 	t.Run("Case1_NeitherToolsNorResults_PassThrough", func(t *testing.T) {
@@ -2239,7 +2229,7 @@ func TestToolResultHandling(t *testing.T) {
 	})
 
 	t.Run("Case2_OnlyTools_OriginalBehavior", func(t *testing.T) {
-		tools := []openai.ChatCompletionToolParam{createTestTool()}
+		tools := []openai.ChatCompletionToolUnionParam{createTestTool()}
 
 		req := openai.ChatCompletionNewParams{
 			Model: "gpt-4",
@@ -2297,7 +2287,7 @@ func TestToolResultHandling(t *testing.T) {
 	})
 
 	t.Run("Case4_ToolsAndResults_BothPresent", func(t *testing.T) {
-		tools := []openai.ChatCompletionToolParam{createTestTool()}
+		tools := []openai.ChatCompletionToolUnionParam{createTestTool()}
 
 		req := openai.ChatCompletionNewParams{
 			Model: "gpt-4",
@@ -2404,8 +2394,8 @@ func TestBufferPoolMemoryGrowthProtection(t *testing.T) {
 
 	t.Run("NormalSizeBuffersArePooled", func(t *testing.T) {
 		// Create a reasonable-sized tool that should stay within the threshold
-		normalTool := openai.ChatCompletionToolParam{
-			Function: openai.FunctionDefinitionParam{
+		normalTool := openai.ChatCompletionFunctionTool(
+			openai.FunctionDefinitionParam{
 				Name:        "normal_function",
 				Description: openai.String("A normal function with reasonable size"),
 				Parameters: map[string]interface{}{
@@ -2418,12 +2408,12 @@ func TestBufferPoolMemoryGrowthProtection(t *testing.T) {
 					},
 				},
 			},
-		}
+		)
 
 		req := openai.ChatCompletionNewParams{
 			Model:    "gpt-4",
 			Messages: []openai.ChatCompletionMessageParamUnion{openai.UserMessage("Test")},
-			Tools:    []openai.ChatCompletionToolParam{normalTool},
+			Tools:    []openai.ChatCompletionToolUnionParam{normalTool},
 		}
 
 		// Process multiple requests to test buffer reuse
@@ -2440,8 +2430,8 @@ func TestBufferPoolMemoryGrowthProtection(t *testing.T) {
 	t.Run("OversizedBuffersAreDiscarded", func(t *testing.T) {
 		// Create a tool with a very large description that will grow the buffer beyond threshold
 		largeDescription := strings.Repeat("This is a very detailed description that will make the buffer grow significantly. ", 500) // ~45KB
-		largeTool := openai.ChatCompletionToolParam{
-			Function: openai.FunctionDefinitionParam{
+		largeTool := openai.ChatCompletionFunctionTool(
+			openai.FunctionDefinitionParam{
 				Name:        "large_function",
 				Description: openai.String(largeDescription),
 				Parameters: map[string]interface{}{
@@ -2468,12 +2458,12 @@ func TestBufferPoolMemoryGrowthProtection(t *testing.T) {
 					},
 				},
 			},
-		}
+		)
 
 		req := openai.ChatCompletionNewParams{
 			Model:    "gpt-4",
 			Messages: []openai.ChatCompletionMessageParamUnion{openai.UserMessage("Test")},
-			Tools:    []openai.ChatCompletionToolParam{largeTool},
+			Tools:    []openai.ChatCompletionToolUnionParam{largeTool},
 		}
 
 		// Process the oversized request - should create a large buffer
@@ -2485,13 +2475,13 @@ func TestBufferPoolMemoryGrowthProtection(t *testing.T) {
 		normalReq := openai.ChatCompletionNewParams{
 			Model:    "gpt-4",
 			Messages: []openai.ChatCompletionMessageParamUnion{openai.UserMessage("Normal test")},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Function: openai.FunctionDefinitionParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(
+					openai.FunctionDefinitionParam{
 						Name:        "small_function",
 						Description: openai.String("Small function"),
 					},
-				},
+				),
 			},
 		}
 
@@ -2510,10 +2500,10 @@ func TestBufferPoolMemoryGrowthProtection(t *testing.T) {
 		largeDescription := strings.Repeat("Large content ", 1000) // ~13KB per description
 
 		// Create multiple large tools to really stress the buffer
-		var largeTools []openai.ChatCompletionToolParam
+		var largeTools []openai.ChatCompletionToolUnionParam
 		for i := 0; i < 10; i++ {
-			largeTools = append(largeTools, openai.ChatCompletionToolParam{
-				Function: openai.FunctionDefinitionParam{
+			largeTools = append(largeTools, openai.ChatCompletionFunctionTool(
+				openai.FunctionDefinitionParam{
 					Name:        fmt.Sprintf("large_function_%d", i),
 					Description: openai.String(largeDescription),
 					Parameters: map[string]interface{}{
@@ -2526,7 +2516,7 @@ func TestBufferPoolMemoryGrowthProtection(t *testing.T) {
 						},
 					},
 				},
-			})
+			))
 		}
 
 		req := openai.ChatCompletionNewParams{
@@ -2732,7 +2722,7 @@ func TestMultimodalMessageHandling(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("Hello world"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
 				createMockTool("test_func", "Test function"),
 			},
 		}
@@ -2773,7 +2763,7 @@ func TestMultimodalMessageHandling(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage(parts),
 			},
-			Tools: []openai.ChatCompletionToolParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
 				createMockTool("test_func", "Test function"),
 			},
 		}
@@ -2830,7 +2820,7 @@ func TestMultimodalMessageHandling(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage(parts),
 			},
-			Tools: []openai.ChatCompletionToolParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
 				createMockTool("test_func", "Test function"),
 			},
 		}
@@ -2882,7 +2872,7 @@ func TestMultimodalMessageHandling(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage(parts),
 			},
-			Tools: []openai.ChatCompletionToolParam{
+			Tools: []openai.ChatCompletionToolUnionParam{
 				createMockTool("test_func", "Test function"),
 			},
 		}

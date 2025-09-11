@@ -226,7 +226,7 @@ This enables models like Gemma 3 (via vLLM) to understand tool results without n
 ## Dependencies
 
 ### Required
-- `github.com/openai/openai-go` (official OpenAI SDK)
+- `github.com/openai/openai-go/v2` (official OpenAI SDK)
 - `github.com/google/uuid` (UUIDv7-based tool call ID generation)
 
 ### Development

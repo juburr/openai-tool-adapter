@@ -8,8 +8,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
+	tooladapter "github.com/juburr/openai-tool-adapter"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

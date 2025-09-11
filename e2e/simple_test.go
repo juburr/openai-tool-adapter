@@ -5,8 +5,8 @@ package e2e
 import (
 	"testing"
 
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 	"github.com/stretchr/testify/assert"
 )
 

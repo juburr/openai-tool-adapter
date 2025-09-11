@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -69,7 +69,7 @@ func testMultimodalWithUnrelatedTool(t *testing.T, client *TestClient, ctx conte
 	req := openai.ChatCompletionNewParams{
 		Model:    client.config.Model,
 		Messages: messages,
-		Tools:    []openai.ChatCompletionToolParam{weatherTool},
+		Tools:    []openai.ChatCompletionToolUnionParam{weatherTool},
 	}
 
 	// Transform the request - this should succeed without errors
@@ -123,7 +123,7 @@ func testToolCallWithImage(t *testing.T, client *TestClient, ctx context.Context
 	req := openai.ChatCompletionNewParams{
 		Model:    client.config.Model,
 		Messages: messages,
-		Tools:    []openai.ChatCompletionToolParam{weatherTool},
+		Tools:    []openai.ChatCompletionToolUnionParam{weatherTool},
 	}
 
 	// Transform the request
@@ -183,7 +183,7 @@ func testMultipleToolsWithMultimodal(t *testing.T, client *TestClient, ctx conte
 	req := openai.ChatCompletionNewParams{
 		Model:    client.config.Model,
 		Messages: messages,
-		Tools: []openai.ChatCompletionToolParam{
+		Tools: []openai.ChatCompletionToolUnionParam{
 			weatherTool,
 			calcTool,
 			timeTool,
@@ -243,7 +243,7 @@ func testComplexMultimodalRequest(t *testing.T, client *TestClient, ctx context.
 	req := openai.ChatCompletionNewParams{
 		Model:    client.config.Model,
 		Messages: messages,
-		Tools:    []openai.ChatCompletionToolParam{calcTool},
+		Tools:    []openai.ChatCompletionToolUnionParam{calcTool},
 	}
 
 	// Transform the request
@@ -375,7 +375,7 @@ func TestMultimodalEdgeCases(t *testing.T) {
 		// Regular text request with tools (no image)
 		weatherTool := CreateWeatherTool()
 
-		req := client.CreateToolRequest("What's the weather in Tokyo?", []openai.ChatCompletionToolParam{weatherTool})
+		req := client.CreateToolRequest("What's the weather in Tokyo?", []openai.ChatCompletionToolUnionParam{weatherTool})
 
 		response, err := client.SendRequest(ctx, req)
 		require.NoError(t, err, "Request should not fail")

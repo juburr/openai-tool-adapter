@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 )
 
 // Benchmark sink variables to prevent compiler optimizations
@@ -24,7 +24,7 @@ func BenchmarkTransformCompletionsRequest_EndToEnd(b *testing.B) {
 
 	testCases := []struct {
 		name  string
-		tools []openai.ChatCompletionToolParam
+		tools []openai.ChatCompletionToolUnionParam
 	}{
 		{
 			name:  "Tiny_1Tool",
@@ -112,7 +112,7 @@ func BenchmarkFullWorkflow_EndToEnd(b *testing.B) {
 
 	testCases := []struct {
 		name     string
-		tools    []openai.ChatCompletionToolParam
+		tools    []openai.ChatCompletionToolUnionParam
 		response string
 	}{
 		{
@@ -162,18 +162,17 @@ func BenchmarkFullWorkflow_EndToEnd(b *testing.B) {
 
 // Helper functions for creating benchmark data
 
-func createBenchmarkTools(count int) []openai.ChatCompletionToolParam {
-	tools := make([]openai.ChatCompletionToolParam, count)
+func createBenchmarkTools(count int) []openai.ChatCompletionToolUnionParam {
+	tools := make([]openai.ChatCompletionToolUnionParam, count)
 
 	for i := 0; i < count; i++ {
-		tools[i] = openai.ChatCompletionToolParam{
-			Type: "function",
-			Function: openai.FunctionDefinitionParam{
+		tools[i] = openai.ChatCompletionFunctionTool(
+			openai.FunctionDefinitionParam{
 				Name:        formatToolName(i),
 				Description: openai.String(formatToolDescription(i)),
 				Parameters:  createToolParameters(i),
 			},
-		}
+		)
 	}
 
 	return tools
@@ -439,11 +438,11 @@ func BenchmarkBufferPoolWithMemoryGrowthProtection(b *testing.B) {
 	for _, tc := range testCases {
 		b.Run(tc.name, func(b *testing.B) {
 			// Create tools of specified size
-			var tools []openai.ChatCompletionToolParam
+			var tools []openai.ChatCompletionToolUnionParam
 			for i := 0; i < tc.toolCount; i++ {
 				description := strings.Repeat("x", tc.descSize)
-				tools = append(tools, openai.ChatCompletionToolParam{
-					Function: openai.FunctionDefinitionParam{
+				tools = append(tools, openai.ChatCompletionFunctionTool(
+					openai.FunctionDefinitionParam{
 						Name:        fmt.Sprintf("function_%d", i),
 						Description: openai.String(description),
 						Parameters: map[string]interface{}{
@@ -456,7 +455,7 @@ func BenchmarkBufferPoolWithMemoryGrowthProtection(b *testing.B) {
 							},
 						},
 					},
-				})
+				))
 			}
 
 			req := openai.ChatCompletionNewParams{

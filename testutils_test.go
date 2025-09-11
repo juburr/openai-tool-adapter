@@ -1,7 +1,7 @@
 package tooladapter_test
 
 import (
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 )
 
 // MockChatCompletionStream provides a simple mock for testing streaming functionality
@@ -43,32 +43,29 @@ func (m *MockChatCompletionStream) SetError(err error) {
 }
 
 // Common test helper functions
-func createMockTool(name, description string) openai.ChatCompletionToolParam {
-	tool := openai.ChatCompletionToolParam{
-		Type: "function",
-		Function: openai.FunctionDefinitionParam{
-			Name: name,
-			Parameters: openai.FunctionParameters{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"param1": map[string]interface{}{
-						"type":        "string",
-						"description": "A parameter",
-					},
+func createMockTool(name, description string) openai.ChatCompletionToolUnionParam {
+	functionDef := openai.FunctionDefinitionParam{
+		Name: name,
+		Parameters: openai.FunctionParameters{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"param1": map[string]interface{}{
+					"type":        "string",
+					"description": "A parameter",
 				},
 			},
 		},
 	}
 
-	// Only set description if it's not empty
+	// Set description if it's not empty
 	if description != "" {
-		tool.Function.Description = openai.String(description)
+		functionDef.Description = openai.String(description)
 	}
 
-	return tool
+	return openai.ChatCompletionFunctionTool(functionDef)
 }
 
-func createMockRequest(tools []openai.ChatCompletionToolParam) openai.ChatCompletionNewParams {
+func createMockRequest(tools []openai.ChatCompletionToolUnionParam) openai.ChatCompletionNewParams {
 	return openai.ChatCompletionNewParams{
 		Model: openai.ChatModelGPT4o,
 		Messages: []openai.ChatCompletionMessageParamUnion{

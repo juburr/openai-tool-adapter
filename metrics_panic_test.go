@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
+	tooladapter "github.com/juburr/openai-tool-adapter"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -34,14 +34,11 @@ func TestMetricsCallbackPanicRecovery(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("Hello"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
-						Name:        "test_function",
-						Description: openai.String("Test function"),
-					},
-				},
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+					Name:        "test_function",
+					Description: openai.String("Test function"),
+				}),
 			},
 		}
 
@@ -133,14 +130,11 @@ func TestMetricsCallbackPanicRecovery(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("Hello"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
-						Name:        "test_function",
-						Description: openai.String("Test function"),
-					},
-				},
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+					Name:        "test_function",
+					Description: openai.String("Test function"),
+				}),
 			},
 		}
 
@@ -185,13 +179,10 @@ func TestMetricsCallbackPanicRecovery(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("Test"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
-						Name: "test",
-					},
-				},
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+					Name: "test",
+				}),
 			},
 		}
 
@@ -223,14 +214,11 @@ func TestMetricsCallbackNoRegression(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("Hello"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
-						Name:        "test_function",
-						Description: openai.String("Test function"),
-					},
-				},
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+					Name:        "test_function",
+					Description: openai.String("Test function"),
+				}),
 			},
 		}
 
@@ -252,13 +240,10 @@ func TestMetricsCallbackNoRegression(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("Hello"),
 			},
-			Tools: []openai.ChatCompletionToolParam{
-				{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
-						Name: "test",
-					},
-				},
+			Tools: []openai.ChatCompletionToolUnionParam{
+				openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+					Name: "test",
+				}),
 			},
 		}
 

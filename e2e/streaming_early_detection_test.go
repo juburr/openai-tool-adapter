@@ -9,8 +9,8 @@ import (
 	"time"
 
 	tooladapter "github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -76,7 +76,7 @@ func TestEarlyDetectionConfiguration(t *testing.T) {
 func TestStreamingEarlyDetectionE2E(t *testing.T) {
 	// Skip this test if the model is not responding quickly
 	testMessage := "Get weather for NYC"
-	tools := []openai.ChatCompletionToolParam{CreateWeatherTool()}
+	tools := []openai.ChatCompletionToolUnionParam{CreateWeatherTool()}
 
 	t.Run("SimpleEarlyDetectionTest", func(t *testing.T) {
 		// Use a simple approach without complex custom templates

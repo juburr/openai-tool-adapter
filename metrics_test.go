@@ -7,8 +7,8 @@ import (
 	"testing"
 	"time"
 
-	"github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
+	tooladapter "github.com/juburr/openai-tool-adapter"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -65,7 +65,7 @@ func TestMetrics_ToolTransformation_BasicEvents(t *testing.T) {
 	t.Run("SingleToolTransformation", func(t *testing.T) {
 		collector.Clear()
 
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("get_weather", "Get weather information"),
 		}
 		req := createMockRequestForMetrics(tools)
@@ -97,7 +97,7 @@ func TestMetrics_ToolTransformation_BasicEvents(t *testing.T) {
 	t.Run("MultipleToolsTransformation", func(t *testing.T) {
 		collector.Clear()
 
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("get_weather", "Get weather information"),
 			createMockToolForMetrics("calculate_tip", "Calculate tip amount"),
 			createMockToolForMetrics("convert_currency", "Convert between currencies"),
@@ -141,7 +141,7 @@ func TestMetrics_ToolTransformation_PerformanceAccuracy(t *testing.T) {
 		collector.Clear()
 
 		// Create a request with many tools to ensure measurable processing time
-		tools := make([]openai.ChatCompletionToolParam, 10)
+		tools := make([]openai.ChatCompletionToolUnionParam, 10)
 		for i := 0; i < 10; i++ {
 			tools[i] = createMockToolForMetrics(
 				fmt.Sprintf("tool_%d", i),
@@ -169,7 +169,7 @@ func TestMetrics_ToolTransformation_PerformanceAccuracy(t *testing.T) {
 
 	t.Run("ConsistentPerformanceMetrics", func(t *testing.T) {
 		// Run the same transformation multiple times and verify metrics consistency
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("consistent_tool", "Consistent tool for testing"),
 		}
 		req := createMockRequestForMetrics(tools)
@@ -487,7 +487,7 @@ func TestMetrics_EdgeCases(t *testing.T) {
 		// Create adapter without metrics callback - should not panic
 		adapter := tooladapter.New()
 
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("test_tool", "Test tool"),
 		}
 		req := createMockRequestForMetrics(tools)
@@ -507,7 +507,7 @@ func TestMetrics_EdgeCases(t *testing.T) {
 			tooladapter.WithMetricsCallback(nil),
 		)
 
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("test_tool", "Test tool"),
 		}
 		req := createMockRequestForMetrics(tools)
@@ -536,7 +536,7 @@ func TestMetrics_EdgeCases(t *testing.T) {
 		)
 
 		// Create 50 tools to test performance with large numbers
-		tools := make([]openai.ChatCompletionToolParam, 50)
+		tools := make([]openai.ChatCompletionToolUnionParam, 50)
 		expectedNames := make([]string, 50)
 		for i := 0; i < 50; i++ {
 			name := fmt.Sprintf("tool_%02d", i)
@@ -575,7 +575,7 @@ func TestMetrics_DataIntegrity(t *testing.T) {
 		collector.Clear()
 
 		// Test tool transformation
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("test_tool", "Test tool"),
 		}
 		req := createMockRequestForMetrics(tools)
@@ -608,7 +608,7 @@ func TestMetrics_DataIntegrity(t *testing.T) {
 		)
 
 		// Generate some metrics events
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("serialization_test", "Test JSON serialization"),
 		}
 		req := createMockRequestForMetrics(tools)
@@ -656,7 +656,7 @@ func TestMetrics_DataIntegrity(t *testing.T) {
 				for j := 0; j < operationsPerGoroutine; j++ {
 					// Alternate between tool transformations and function call detections
 					if j%2 == 0 {
-						tools := []openai.ChatCompletionToolParam{
+						tools := []openai.ChatCompletionToolUnionParam{
 							createMockToolForMetrics(fmt.Sprintf("tool_g%d_op%d", goroutineID, j), "Concurrent test tool"),
 						}
 						req := createMockRequestForMetrics(tools)
@@ -700,10 +700,9 @@ func TestMetrics_DataIntegrity(t *testing.T) {
 // HELPER FUNCTIONS FOR METRICS TESTS
 // ============================================================================
 
-func createMockToolForMetrics(name, description string) openai.ChatCompletionToolParam {
-	return openai.ChatCompletionToolParam{
-		Type: "function",
-		Function: openai.FunctionDefinitionParam{
+func createMockToolForMetrics(name, description string) openai.ChatCompletionToolUnionParam {
+	return openai.ChatCompletionFunctionTool(
+		openai.FunctionDefinitionParam{
 			Name:        name,
 			Description: openai.String(description),
 			Parameters: openai.FunctionParameters{
@@ -716,10 +715,10 @@ func createMockToolForMetrics(name, description string) openai.ChatCompletionToo
 				},
 			},
 		},
-	}
+	)
 }
 
-func createMockRequestForMetrics(tools []openai.ChatCompletionToolParam) openai.ChatCompletionNewParams {
+func createMockRequestForMetrics(tools []openai.ChatCompletionToolUnionParam) openai.ChatCompletionNewParams {
 	return openai.ChatCompletionNewParams{
 		Model: openai.ChatModelGPT4o,
 		Messages: []openai.ChatCompletionMessageParamUnion{

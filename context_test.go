@@ -8,7 +8,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -20,18 +20,15 @@ const (
 )
 
 // Test helper functions specific to context tests
-func createMockTool(name, description string) openai.ChatCompletionToolParam {
-	tool := openai.ChatCompletionToolParam{
-		Type: "function",
-		Function: openai.FunctionDefinitionParam{
-			Name: name,
-			Parameters: openai.FunctionParameters{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"param1": map[string]interface{}{
-						"type":        "string",
-						"description": "A parameter",
-					},
+func createMockTool(name, description string) openai.ChatCompletionToolUnionParam {
+	functionDef := openai.FunctionDefinitionParam{
+		Name: name,
+		Parameters: openai.FunctionParameters{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"param1": map[string]interface{}{
+					"type":        "string",
+					"description": "A parameter",
 				},
 			},
 		},
@@ -39,13 +36,13 @@ func createMockTool(name, description string) openai.ChatCompletionToolParam {
 
 	// Only set description if it's not empty
 	if description != "" {
-		tool.Function.Description = openai.String(description)
+		functionDef.Description = openai.String(description)
 	}
 
-	return tool
+	return openai.ChatCompletionFunctionTool(functionDef)
 }
 
-func createMockRequest(tools []openai.ChatCompletionToolParam) openai.ChatCompletionNewParams {
+func createMockRequest(tools []openai.ChatCompletionToolUnionParam) openai.ChatCompletionNewParams {
 	return openai.ChatCompletionNewParams{
 		Model: openai.ChatModelGPT4o,
 		Messages: []openai.ChatCompletionMessageParamUnion{
@@ -79,7 +76,7 @@ func TestTransformCompletionsRequestWithContext_ImmediateCancellation(t *testing
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 
-	req := createMockRequest([]openai.ChatCompletionToolParam{
+	req := createMockRequest([]openai.ChatCompletionToolUnionParam{
 		createMockTool("test_func", "Test function"),
 	})
 
@@ -92,7 +89,7 @@ func TestTransformCompletionsRequestWithContext_CancellationDuringProcessing(t *
 	adapter := New()
 
 	// Create many tools to increase processing time
-	tools := make([]openai.ChatCompletionToolParam, 50)
+	tools := make([]openai.ChatCompletionToolUnionParam, 50)
 	for i := 0; i < 50; i++ {
 		tools[i] = createMockTool("test_func_"+string(rune('A'+i)), "Test function")
 	}
@@ -170,7 +167,7 @@ func TestTransformCompletionsRequestWithContext_ShortTimeout(t *testing.T) {
 	// Wait for timeout to definitely trigger
 	time.Sleep(1 * time.Millisecond)
 
-	req := createMockRequest([]openai.ChatCompletionToolParam{
+	req := createMockRequest([]openai.ChatCompletionToolUnionParam{
 		createMockTool("test_func", "Test function"),
 	})
 
@@ -185,7 +182,7 @@ func TestTransformCompletionsRequestWithContext_ReasonableTimeout(t *testing.T) 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
-	req := createMockRequest([]openai.ChatCompletionToolParam{
+	req := createMockRequest([]openai.ChatCompletionToolUnionParam{
 		createMockTool("test_func", "Test function"),
 	})
 
@@ -493,7 +490,7 @@ func TestContextWithValue_Propagation(t *testing.T) {
 	// Create context with value
 	ctx := context.WithValue(context.Background(), ctxKeyRequestID, "test_123")
 
-	req := createMockRequest([]openai.ChatCompletionToolParam{
+	req := createMockRequest([]openai.ChatCompletionToolUnionParam{
 		createMockTool("test_func", "Test function"),
 	})
 
@@ -509,7 +506,7 @@ func TestContextWithValue_Propagation(t *testing.T) {
 func TestNilContext_Panics(t *testing.T) {
 	adapter := New()
 
-	req := createMockRequest([]openai.ChatCompletionToolParam{
+	req := createMockRequest([]openai.ChatCompletionToolUnionParam{
 		createMockTool("test_func", "Test function"),
 	})
 
@@ -587,7 +584,7 @@ func TestConcurrentContextOperations(t *testing.T) {
 					ctx, cancel = context.WithTimeout(context.Background(), 1*time.Second)
 				}
 
-				req := createMockRequest([]openai.ChatCompletionToolParam{
+				req := createMockRequest([]openai.ChatCompletionToolUnionParam{
 					createMockTool("test_func", "Test function"),
 				})
 
@@ -689,7 +686,7 @@ func TestBackwardCompatibility_OriginalMethodsUnchanged(t *testing.T) {
 	adapter := New()
 
 	// Test original TransformCompletionsRequest
-	req := createMockRequest([]openai.ChatCompletionToolParam{
+	req := createMockRequest([]openai.ChatCompletionToolUnionParam{
 		createMockTool("test_func", "Test function"),
 	})
 

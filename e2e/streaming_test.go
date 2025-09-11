@@ -11,8 +11,8 @@ import (
 	"time"
 
 	tooladapter "github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -104,7 +104,7 @@ func TestStreamingToolCalling(t *testing.T) {
 
 	t.Run("StreamingWeatherToolCall", func(t *testing.T) {
 		weatherTool := CreateWeatherTool()
-		request := client.CreateToolRequest("What's the weather in New York?", []openai.ChatCompletionToolParam{weatherTool})
+		request := client.CreateToolRequest("What's the weather in New York?", []openai.ChatCompletionToolUnionParam{weatherTool})
 
 		streamAdapter, err := client.SendStreamingRequest(ctx, request)
 		require.NoError(t, err, "Streaming tool request should not fail")
@@ -175,7 +175,7 @@ func TestStreamingToolCalling(t *testing.T) {
 	t.Run("StreamingWithMultipleToolsAvailable", func(t *testing.T) {
 		weatherTool := CreateWeatherTool()
 		calcTool := CreateCalculatorTool()
-		tools := []openai.ChatCompletionToolParam{weatherTool, calcTool}
+		tools := []openai.ChatCompletionToolUnionParam{weatherTool, calcTool}
 
 		request := client.CreateToolRequest("Calculate 15 plus 27", tools)
 
@@ -252,7 +252,7 @@ func TestStreamingWithDifferentPolicies(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("What's the weather in Paris?"),
 			},
-			Tools: []openai.ChatCompletionToolParam{weatherTool},
+			Tools: []openai.ChatCompletionToolUnionParam{weatherTool},
 		}
 
 		transformedRequest, err := adapter.TransformCompletionsRequest(request)
@@ -313,7 +313,7 @@ func TestStreamingWithDifferentPolicies(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("What's the weather in Berlin? Also tell me about the city."),
 			},
-			Tools: []openai.ChatCompletionToolParam{weatherTool},
+			Tools: []openai.ChatCompletionToolUnionParam{weatherTool},
 		}
 
 		transformedRequest, err := adapter.TransformCompletionsRequest(request)

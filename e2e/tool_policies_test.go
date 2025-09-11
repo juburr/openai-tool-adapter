@@ -11,8 +11,8 @@ import (
 	"time"
 
 	tooladapter "github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -41,7 +41,7 @@ func TestToolPolicyStopOnFirst(t *testing.T) {
 		searchTool := CreateSearchTool()
 		calcTool := CreateCalculatorTool()
 
-		tools := []openai.ChatCompletionToolParam{weatherTool, timeTool, searchTool, calcTool}
+		tools := []openai.ChatCompletionToolUnionParam{weatherTool, timeTool, searchTool, calcTool}
 
 		// Ask a question that could reasonably trigger multiple tools
 		request := openai.ChatCompletionNewParams{
@@ -113,7 +113,7 @@ func TestToolPolicyStopOnFirst(t *testing.T) {
 		calcTool := CreateCalculatorTool()
 		timeTool := CreateTimeTool()
 
-		tools := []openai.ChatCompletionToolParam{weatherTool, calcTool, timeTool}
+		tools := []openai.ChatCompletionToolUnionParam{weatherTool, calcTool, timeTool}
 
 		request := openai.ChatCompletionNewParams{
 			Model: config.Model,
@@ -192,7 +192,7 @@ func TestToolPolicyCollectThenStop(t *testing.T) {
 		calcTool := CreateCalculatorTool()
 		translationTool := CreateTranslationTool()
 
-		tools := []openai.ChatCompletionToolParam{weatherTool, calcTool, translationTool}
+		tools := []openai.ChatCompletionToolUnionParam{weatherTool, calcTool, translationTool}
 
 		request := openai.ChatCompletionNewParams{
 			Model: config.Model,
@@ -255,7 +255,7 @@ func TestToolPolicyDrainAll(t *testing.T) {
 		timeTool := CreateTimeTool()
 		searchTool := CreateSearchTool()
 
-		tools := []openai.ChatCompletionToolParam{weatherTool, calcTool, timeTool, searchTool}
+		tools := []openai.ChatCompletionToolUnionParam{weatherTool, calcTool, timeTool, searchTool}
 
 		// Ask a complex question that should trigger multiple tools
 		request := openai.ChatCompletionNewParams{
@@ -327,7 +327,7 @@ func TestToolPolicyDrainAll(t *testing.T) {
 		calcTool := CreateCalculatorTool()
 		timeTool := CreateTimeTool()
 
-		tools := []openai.ChatCompletionToolParam{weatherTool, calcTool, timeTool}
+		tools := []openai.ChatCompletionToolUnionParam{weatherTool, calcTool, timeTool}
 
 		request := openai.ChatCompletionNewParams{
 			Model: config.Model,
@@ -407,7 +407,7 @@ func TestToolPolicyAllowMixed(t *testing.T) {
 		weatherTool := CreateWeatherTool()
 		calcTool := CreateCalculatorTool()
 
-		tools := []openai.ChatCompletionToolParam{weatherTool, calcTool}
+		tools := []openai.ChatCompletionToolUnionParam{weatherTool, calcTool}
 
 		// Ask a question that encourages both tool use AND explanatory text
 		request := openai.ChatCompletionNewParams{
@@ -474,7 +474,7 @@ func TestToolPolicyAllowMixed(t *testing.T) {
 		weatherTool := CreateWeatherTool()
 		timeTool := CreateTimeTool()
 
-		tools := []openai.ChatCompletionToolParam{weatherTool, timeTool}
+		tools := []openai.ChatCompletionToolUnionParam{weatherTool, timeTool}
 
 		request := openai.ChatCompletionNewParams{
 			Model: config.Model,

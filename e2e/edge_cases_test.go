@@ -10,7 +10,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -40,9 +40,9 @@ func TestEdgeCasesAndErrorHandling(t *testing.T) {
 		defer cancel()
 
 		// Create tool with invalid/malformed definition
-		invalidTool := openai.ChatCompletionToolParam{
+		invalidTool := openai.ChatCompletionFunctionTool(
 			Type: "function",
-			Function: openai.FunctionDefinitionParam{
+			openai.FunctionDefinitionParam{
 				Name:        "invalid-tool-name-with-hyphens-and-special$chars!",
 				Description: openai.String("An invalid tool for testing"),
 				Parameters: openai.FunctionParameters{
@@ -52,7 +52,7 @@ func TestEdgeCasesAndErrorHandling(t *testing.T) {
 			},
 		}
 
-		request := client.CreateToolRequest("Use the invalid tool", []openai.ChatCompletionToolParam{invalidTool})
+		request := client.CreateToolRequest("Use the invalid tool", []openai.ChatCompletionToolUnionParam{invalidTool})
 
 		// The adapter should handle this gracefully
 		response, err := client.SendRequest(ctx, request)
@@ -71,9 +71,9 @@ func TestEdgeCasesAndErrorHandling(t *testing.T) {
 		defer cancel()
 
 		// Create a tool that might receive very long arguments
-		longParamTool := openai.ChatCompletionToolParam{
+		longParamTool := openai.ChatCompletionFunctionTool(
 			Type: "function",
-			Function: openai.FunctionDefinitionParam{
+			openai.FunctionDefinitionParam{
 				Name:        "process_text",
 				Description: openai.String("Process a long text input"),
 				Parameters: openai.FunctionParameters{
@@ -91,7 +91,7 @@ func TestEdgeCasesAndErrorHandling(t *testing.T) {
 
 		// Create a moderately long message (reduced from 100 to 20 repetitions)
 		longText := strings.Repeat("This is a sentence that should be processed. ", 20)
-		request := client.CreateToolRequest("Process this text: "+longText, []openai.ChatCompletionToolParam{longParamTool})
+		request := client.CreateToolRequest("Process this text: "+longText, []openai.ChatCompletionToolUnionParam{longParamTool})
 
 		response, err := client.SendRequest(ctx, request)
 		if err != nil {
@@ -122,7 +122,7 @@ func TestEdgeCasesAndErrorHandling(t *testing.T) {
 		cities := []string{"London", "Paris", "Tokyo", "New York", "Sydney"}
 
 		for _, city := range cities {
-			request := client.CreateToolRequest("What's the weather in "+city+"?", []openai.ChatCompletionToolParam{weatherTool})
+			request := client.CreateToolRequest("What's the weather in "+city+"?", []openai.ChatCompletionToolUnionParam{weatherTool})
 
 			response, err := client.SendRequest(ctx, request)
 			require.NoError(t, err, "Consecutive request for %s should not fail", city)
@@ -159,7 +159,7 @@ func TestEdgeCasesAndErrorHandling(t *testing.T) {
 		}
 
 		for _, city := range unicodeCities {
-			request := client.CreateToolRequest("What's the weather in "+city+"?", []openai.ChatCompletionToolParam{weatherTool})
+			request := client.CreateToolRequest("What's the weather in "+city+"?", []openai.ChatCompletionToolUnionParam{weatherTool})
 
 			response, err := client.SendRequest(ctx, request)
 			require.NoError(t, err, "Unicode request for %s should not fail", city)
@@ -263,7 +263,7 @@ func TestStreamingEdgeCases(t *testing.T) {
 		defer cancel()
 
 		weatherTool := CreateWeatherTool()
-		request := client.CreateToolRequest("What's the weather in Miami?", []openai.ChatCompletionToolParam{weatherTool})
+		request := client.CreateToolRequest("What's the weather in Miami?", []openai.ChatCompletionToolUnionParam{weatherTool})
 
 		streamAdapter, err := client.SendStreamingRequest(ctx, request)
 		require.NoError(t, err, "Streaming request should not fail")
@@ -315,11 +315,11 @@ func TestResourceLimitsAndSafety(t *testing.T) {
 		defer cancel()
 
 		// Create many tools
-		var tools []openai.ChatCompletionToolParam
+		var tools []openai.ChatCompletionToolUnionParam
 		for i := 0; i < 20; i++ {
-			tool := openai.ChatCompletionToolParam{
+			tool := openai.ChatCompletionFunctionTool(
 				Type: "function",
-				Function: openai.FunctionDefinitionParam{
+				openai.FunctionDefinitionParam{
 					Name:        fmt.Sprintf("test_function_%d", i),
 					Description: openai.String(fmt.Sprintf("Test function number %d", i)),
 					Parameters: openai.FunctionParameters{

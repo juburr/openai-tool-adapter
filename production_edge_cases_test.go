@@ -10,7 +10,7 @@ import (
 	"time"
 
 	"github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -23,11 +23,10 @@ func TestProductionEdgeCases(t *testing.T) {
 
 			// Create request with many tools to test memory usage
 			const toolCount = 1000
-			tools := make([]openai.ChatCompletionToolParam, toolCount)
+			tools := make([]openai.ChatCompletionToolUnionParam, toolCount)
 			for i := 0; i < toolCount; i++ {
-				tools[i] = openai.ChatCompletionToolParam{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
+				tools[i] = openai.ChatCompletionFunctionTool(
+					openai.FunctionDefinitionParam{
 						Name:        fmt.Sprintf("function_%d", i),
 						Description: openai.String(fmt.Sprintf("Function number %d", i)),
 						Parameters: map[string]interface{}{
@@ -40,7 +39,7 @@ func TestProductionEdgeCases(t *testing.T) {
 							},
 						},
 					},
-				}
+				)
 			}
 
 			req := openai.ChatCompletionNewParams{
@@ -69,14 +68,13 @@ func TestProductionEdgeCases(t *testing.T) {
 					openai.UserMessage("Test with long tool name"),
 				},
 				Model: openai.ChatModelGPT4o,
-				Tools: []openai.ChatCompletionToolParam{
-					{
-						Type: "function",
-						Function: openai.FunctionDefinitionParam{
+				Tools: []openai.ChatCompletionToolUnionParam{
+					openai.ChatCompletionFunctionTool(
+						openai.FunctionDefinitionParam{
 							Name:        longName,
 							Description: openai.String("Test function"),
 						},
-					},
+					),
 				},
 			}
 
@@ -110,15 +108,14 @@ func TestProductionEdgeCases(t *testing.T) {
 					openai.UserMessage("Test with large schema"),
 				},
 				Model: openai.ChatModelGPT4o,
-				Tools: []openai.ChatCompletionToolParam{
-					{
-						Type: "function",
-						Function: openai.FunctionDefinitionParam{
+				Tools: []openai.ChatCompletionToolUnionParam{
+					openai.ChatCompletionFunctionTool(
+						openai.FunctionDefinitionParam{
 							Name:        "large_schema_function",
 							Description: openai.String("Function with large schema"),
 							Parameters:  largeSchema,
 						},
-					},
+					),
 				},
 			}
 
@@ -239,14 +236,13 @@ func TestProductionEdgeCases(t *testing.T) {
 								openai.UserMessage(fmt.Sprintf("Message from goroutine %d, operation %d", id, j)),
 							},
 							Model: openai.ChatModelGPT4o,
-							Tools: []openai.ChatCompletionToolParam{
-								{
-									Type: "function",
-									Function: openai.FunctionDefinitionParam{
+							Tools: []openai.ChatCompletionToolUnionParam{
+								openai.ChatCompletionFunctionTool(
+									openai.FunctionDefinitionParam{
 										Name:        fmt.Sprintf("func_%d_%d", id, j),
 										Description: openai.String("Test function"),
 									},
-								},
+								),
 							},
 						}
 
@@ -315,15 +311,14 @@ func TestProductionEdgeCases(t *testing.T) {
 			defer cancel()
 
 			// Create a large request that might take time to process
-			tools := make([]openai.ChatCompletionToolParam, 100)
+			tools := make([]openai.ChatCompletionToolUnionParam, 100)
 			for i := 0; i < 100; i++ {
-				tools[i] = openai.ChatCompletionToolParam{
-					Type: "function",
-					Function: openai.FunctionDefinitionParam{
+				tools[i] = openai.ChatCompletionFunctionTool(
+					openai.FunctionDefinitionParam{
 						Name:        fmt.Sprintf("func_%d", i),
 						Description: openai.String("Test function"),
 					},
-				}
+				)
 			}
 
 			req := openai.ChatCompletionNewParams{
@@ -385,14 +380,13 @@ func TestMemoryUsagePatterns(t *testing.T) {
 					openai.UserMessage("Test message"),
 				},
 				Model: openai.ChatModelGPT4o,
-				Tools: []openai.ChatCompletionToolParam{
-					{
-						Type: "function",
-						Function: openai.FunctionDefinitionParam{
+				Tools: []openai.ChatCompletionToolUnionParam{
+					openai.ChatCompletionFunctionTool(
+						openai.FunctionDefinitionParam{
 							Name:        "test_func",
 							Description: openai.String("Test function"),
 						},
-					},
+					),
 				},
 			}
 

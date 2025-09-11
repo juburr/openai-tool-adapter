@@ -3,7 +3,7 @@ package tooladapter
 import (
 	"fmt"
 
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 )
 
 // MockStream implements ChatCompletionStreamInterface for testing

@@ -6,14 +6,14 @@ import (
 	"testing"
 	"time"
 
-	"github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
+	tooladapter "github.com/juburr/openai-tool-adapter"
+	"github.com/openai/openai-go/v2"
 )
 
 // BenchmarkMetrics_PerformanceImpact measures the performance impact of the metrics system
 func BenchmarkMetrics_PerformanceImpact(b *testing.B) {
 	// Test data
-	tools := []openai.ChatCompletionToolParam{
+	tools := []openai.ChatCompletionToolUnionParam{
 		createMockToolForMetrics("benchmark_tool_1", "First benchmark tool"),
 		createMockToolForMetrics("benchmark_tool_2", "Second benchmark tool"),
 		createMockToolForMetrics("benchmark_tool_3", "Third benchmark tool"),
@@ -59,7 +59,7 @@ func BenchmarkMetrics_DurationCapture(b *testing.B) {
 			tooladapter.WithMetricsCallback(metricsCallback),
 		)
 
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("timing_test", "Timing overhead test"),
 		}
 		req := createMockRequestForMetrics(tools)
@@ -122,7 +122,7 @@ func BenchmarkMetrics_ConcurrentAccess(b *testing.B) {
 			tooladapter.WithMetricsCallback(metricsCallback),
 		)
 
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("concurrent_test", "Concurrent access test"),
 		}
 		req := createMockRequestForMetrics(tools)
@@ -175,7 +175,7 @@ func BenchmarkMetrics_RealWorldScenarios(b *testing.B) {
 		)
 
 		// Typical web API tools
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("get_user_profile", "Get user profile information"),
 			createMockToolForMetrics("update_preferences", "Update user preferences"),
 			createMockToolForMetrics("send_notification", "Send notification to user"),
@@ -291,7 +291,7 @@ func BenchmarkMetrics_MemoryAllocation(b *testing.B) {
 			tooladapter.WithMetricsCallback(metricsCallback),
 		)
 
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("alloc_test", "Memory allocation test"),
 		}
 		req := createMockRequestForMetrics(tools)
@@ -315,7 +315,7 @@ func BenchmarkMetrics_MemoryAllocation(b *testing.B) {
 		// Baseline: adapter without metrics to compare allocation
 		adapter := tooladapter.New()
 
-		tools := []openai.ChatCompletionToolParam{
+		tools := []openai.ChatCompletionToolUnionParam{
 			createMockToolForMetrics("no_metrics_test", "No metrics baseline test"),
 		}
 		req := createMockRequestForMetrics(tools)

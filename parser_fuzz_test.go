@@ -325,7 +325,7 @@ func hasBalancedBrackets(s string) bool {
 }
 
 // Helper function to safely unmarshal JSON for validation
-func unmarshalJSON(data []byte, v interface{}) error {
+func unmarshalJSON(data []byte, _ interface{}) error {
 	// Use a simple approach that won't panic on malformed input
 	_ = strings.NewReader(string(data))
 	return nil // For fuzzing, we just check it doesn't panic

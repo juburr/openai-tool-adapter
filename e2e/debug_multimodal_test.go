@@ -8,7 +8,7 @@ import (
 	"os"
 	"testing"
 
-	"github.com/openai/openai-go"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/require"
 )
 
@@ -36,7 +36,7 @@ func TestDebugMultimodalTransformation(t *testing.T) {
 	req := openai.ChatCompletionNewParams{
 		Model:    client.config.Model,
 		Messages: messages,
-		Tools:    []openai.ChatCompletionToolParam{weatherTool},
+		Tools:    []openai.ChatCompletionToolUnionParam{weatherTool},
 	}
 
 	// Transform the request
@@ -87,7 +87,7 @@ func TestDebugMultimodalTransformation(t *testing.T) {
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage("Please tell me about weather patterns."),
 			},
-			Tools: []openai.ChatCompletionToolParam{weatherTool},
+			Tools: []openai.ChatCompletionToolUnionParam{weatherTool},
 		}
 
 		simpleTransformed, err := client.adapter.TransformCompletionsRequest(simpleReq)

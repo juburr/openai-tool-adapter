@@ -6,8 +6,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
+	tooladapter "github.com/juburr/openai-tool-adapter"
+	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -102,15 +102,12 @@ func TestErrorPaths(t *testing.T) {
 					openai.UserMessage("Test message"),
 				},
 				Model: openai.ChatModelGPT4o,
-				Tools: []openai.ChatCompletionToolParam{
-					{
-						Type: "function",
-						Function: openai.FunctionDefinitionParam{
-							Name:        "test_func",
-							Description: openai.String("Test function"),
-							Parameters:  circularRef,
-						},
-					},
+				Tools: []openai.ChatCompletionToolUnionParam{
+					openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+						Name:        "test_func",
+						Description: openai.String("Test function"),
+						Parameters:  circularRef,
+					}),
 				},
 			}
 
@@ -160,7 +157,7 @@ func TestErrorPaths(t *testing.T) {
 			emptyReq := openai.ChatCompletionNewParams{
 				Messages: []openai.ChatCompletionMessageParamUnion{},
 				Model:    openai.ChatModelGPT4o,
-				Tools:    []openai.ChatCompletionToolParam{},
+				Tools:    []openai.ChatCompletionToolUnionParam{},
 			}
 
 			result, err := adapter.TransformCompletionsRequest(emptyReq)
@@ -205,15 +202,12 @@ func TestErrorPaths(t *testing.T) {
 					openai.UserMessage("Test message"),
 				},
 				Model: openai.ChatModelGPT4o,
-				Tools: []openai.ChatCompletionToolParam{
-					{
-						Type: "function",
-						Function: openai.FunctionDefinitionParam{
-							Name:        "nil_params_func",
-							Description: openai.String("Function with nil parameters"),
-							Parameters:  nil, // Nil parameters
-						},
-					},
+				Tools: []openai.ChatCompletionToolUnionParam{
+					openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+						Name:        "nil_params_func",
+						Description: openai.String("Function with nil parameters"),
+						Parameters:  nil, // Nil parameters
+					}),
 				},
 			}
 
@@ -327,14 +321,11 @@ func TestErrorPaths(t *testing.T) {
 					openai.UserMessage("Test with long description"),
 				},
 				Model: openai.ChatModelGPT4o,
-				Tools: []openai.ChatCompletionToolParam{
-					{
-						Type: "function",
-						Function: openai.FunctionDefinitionParam{
-							Name:        "long_desc_func",
-							Description: openai.String(longDescription),
-						},
-					},
+				Tools: []openai.ChatCompletionToolUnionParam{
+					openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+						Name:        "long_desc_func",
+						Description: openai.String(longDescription),
+					}),
 				},
 			}
 
@@ -357,14 +348,11 @@ func TestErrorPaths(t *testing.T) {
 			req := openai.ChatCompletionNewParams{
 				Messages: messages,
 				Model:    openai.ChatModelGPT4o,
-				Tools: []openai.ChatCompletionToolParam{
-					{
-						Type: "function",
-						Function: openai.FunctionDefinitionParam{
-							Name:        "test_func",
-							Description: openai.String("Test function"),
-						},
-					},
+				Tools: []openai.ChatCompletionToolUnionParam{
+					openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+						Name:        "test_func",
+						Description: openai.String("Test function"),
+					}),
 				},
 			}
 
@@ -383,24 +371,21 @@ func createMockRequestForErrorTests() openai.ChatCompletionNewParams {
 			openai.UserMessage("Test message"),
 		},
 		Model: openai.ChatModelGPT4o,
-		Tools: []openai.ChatCompletionToolParam{
-			{
-				Type: "function",
-				Function: openai.FunctionDefinitionParam{
-					Name:        "test_function",
-					Description: openai.String("A test function"),
-					Parameters: openai.FunctionParameters{
-						"type": "object",
-						"properties": map[string]interface{}{
-							"message": map[string]interface{}{
-								"type":        "string",
-								"description": "The message to process",
-							},
+		Tools: []openai.ChatCompletionToolUnionParam{
+			openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+				Name:        "test_function",
+				Description: openai.String("A test function"),
+				Parameters: openai.FunctionParameters{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"message": map[string]interface{}{
+							"type":        "string",
+							"description": "The message to process",
 						},
-						"required": []string{"message"},
 					},
+					"required": []string{"message"},
 				},
-			},
+			}),
 		},
 	}
 }

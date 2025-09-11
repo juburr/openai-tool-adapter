@@ -17,11 +17,10 @@ import (
 	"log/slog"
 	"strings"
 	"sync"
-
-	"github.com/google/uuid"
 	"time"
 
-	"github.com/openai/openai-go"
+	"github.com/google/uuid"
+	"github.com/openai/openai-go/v2"
 )
 
 // Define the constant value for "function" type
@@ -161,9 +160,11 @@ func (a *Adapter) TransformCompletionsRequestWithContext(ctx context.Context, re
 	}
 
 	// Extract tool names for logging and metrics
-	toolNames := make([]string, len(req.Tools))
-	for i, tool := range req.Tools {
-		toolNames[i] = tool.Function.Name
+	toolNames := make([]string, 0, len(req.Tools))
+	for _, tool := range req.Tools {
+		if function := tool.GetFunction(); function != nil {
+			toolNames = append(toolNames, function.Name)
+		}
 	}
 
 	// Check for cancellation before expensive operation
@@ -505,17 +506,17 @@ func (a *Adapter) buildMixedChoice(choice openai.ChatCompletionChoice, calls []f
 	}
 
 	// Create tool calls while preserving original content
-	toolCalls := make([]openai.ChatCompletionMessageToolCall, maxCalls)
+	toolCalls := make([]openai.ChatCompletionMessageToolCallUnion, maxCalls)
 	for i, call := range calls[:maxCalls] {
 		parameters := call.Parameters
 		if parameters == nil {
 			parameters = json.RawMessage("null")
 		}
 
-		toolCalls[i] = openai.ChatCompletionMessageToolCall{
+		toolCalls[i] = openai.ChatCompletionMessageToolCallUnion{
 			ID:   a.GenerateToolCallID(),
 			Type: functionType,
-			Function: openai.ChatCompletionMessageToolCallFunction{
+			Function: openai.ChatCompletionMessageFunctionToolCallFunction{
 				Name:      call.Name,
 				Arguments: string(parameters),
 			},
@@ -551,11 +552,11 @@ func (a *Adapter) buildStopOnFirstChoice(choice openai.ChatCompletionChoice, cal
 		parameters = json.RawMessage("null")
 	}
 
-	toolCalls := []openai.ChatCompletionMessageToolCall{
+	toolCalls := []openai.ChatCompletionMessageToolCallUnion{
 		{
 			ID:   a.GenerateToolCallID(),
 			Type: functionType,
-			Function: openai.ChatCompletionMessageToolCallFunction{
+			Function: openai.ChatCompletionMessageFunctionToolCallFunction{
 				Name:      firstCall.Name,
 				Arguments: string(parameters),
 			},
@@ -590,17 +591,17 @@ func (a *Adapter) buildCollectThenStopChoice(choice openai.ChatCompletionChoice,
 	}
 
 	// Create tool calls up to the limit
-	toolCalls := make([]openai.ChatCompletionMessageToolCall, maxCalls)
+	toolCalls := make([]openai.ChatCompletionMessageToolCallUnion, maxCalls)
 	for i, call := range calls[:maxCalls] {
 		parameters := call.Parameters
 		if parameters == nil {
 			parameters = json.RawMessage("null")
 		}
 
-		toolCalls[i] = openai.ChatCompletionMessageToolCall{
+		toolCalls[i] = openai.ChatCompletionMessageToolCallUnion{
 			ID:   a.GenerateToolCallID(),
 			Type: functionType,
-			Function: openai.ChatCompletionMessageToolCallFunction{
+			Function: openai.ChatCompletionMessageFunctionToolCallFunction{
 				Name:      call.Name,
 				Arguments: string(parameters),
 			},
@@ -635,17 +636,17 @@ func (a *Adapter) buildDrainAllChoice(choice openai.ChatCompletionChoice, calls 
 	}
 
 	// Create tool calls for all detected calls
-	toolCalls := make([]openai.ChatCompletionMessageToolCall, maxCalls)
+	toolCalls := make([]openai.ChatCompletionMessageToolCallUnion, maxCalls)
 	for i, call := range calls[:maxCalls] {
 		parameters := call.Parameters
 		if parameters == nil {
 			parameters = json.RawMessage("null")
 		}
 
-		toolCalls[i] = openai.ChatCompletionMessageToolCall{
+		toolCalls[i] = openai.ChatCompletionMessageToolCallUnion{
 			ID:   a.GenerateToolCallID(),
 			Type: functionType,
-			Function: openai.ChatCompletionMessageToolCallFunction{
+			Function: openai.ChatCompletionMessageFunctionToolCallFunction{
 				Name:      call.Name,
 				Arguments: string(parameters),
 			},
@@ -671,7 +672,7 @@ func (a *Adapter) buildDrainAllChoice(choice openai.ChatCompletionChoice, calls 
 // DEPRECATED: This function is kept for backward compatibility but should not be used
 // buildToolPromptWithContext constructs the system prompt with tool definitions
 // with context support for cancellation and timeouts.
-func (a *Adapter) buildToolPromptWithContext(ctx context.Context, tools []openai.ChatCompletionToolParam) (string, error) {
+func (a *Adapter) buildToolPromptWithContext(ctx context.Context, tools []openai.ChatCompletionToolUnionParam) (string, error) {
 	if len(tools) == 0 {
 		return "", nil
 	}
@@ -700,17 +701,23 @@ func (a *Adapter) buildToolPromptWithContext(ctx context.Context, tools []openai
 		default:
 		}
 
+		// Get the function definition from the union type
+		function := tool.GetFunction()
+		if function == nil {
+			continue // Skip if this isn't a function tool
+		}
+
 		// Start with name and description - the core information LLMs need
-		fmt.Fprintf(buf, "- %s", tool.Function.Name)
+		fmt.Fprintf(buf, "- %s", function.Name)
 
 		// Use param.Opt's Or() method for efficient access with fallback
-		if desc := tool.Function.Description.Or(""); desc != "" {
+		if desc := function.Description.Or(""); desc != "" {
 			fmt.Fprintf(buf, ": %s", desc)
 		}
 
 		// Include parameter schema if available - use compact JSON (no indentation)
-		if tool.Function.Parameters != nil {
-			paramsJSON, err := json.Marshal(tool.Function.Parameters) // Compact JSON, no indent
+		if function.Parameters != nil {
+			paramsJSON, err := json.Marshal(function.Parameters) // Compact JSON, no indent
 			if err == nil {
 				fmt.Fprintf(buf, "\n  Parameters: %s", string(paramsJSON))
 			}
@@ -719,7 +726,7 @@ func (a *Adapter) buildToolPromptWithContext(ctx context.Context, tools []openai
 		// Include strict mode flag if specified (OpenAI Structured Outputs)
 		// Note: We pass this field through for compatibility but don't add verbose
 		// prompt instructions since small LLMs may not reliably follow strict compliance
-		if tool.Function.Strict.Or(false) {
+		if function.Strict.Or(false) {
 			buf.WriteString("\n  Strict: true")
 		}
 

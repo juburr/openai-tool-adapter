@@ -8,8 +8,8 @@ import (
 	"time"
 
 	tooladapter "github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go"
-	"github.com/openai/openai-go/option"
+	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v2/option"
 )
 
 // TestClient wraps OpenAI client and adapter for testing
@@ -59,7 +59,7 @@ func NewTestClientWithVerboseLogging() *TestClient {
 func CreateWeatherTool() openai.ChatCompletionToolParam {
 	return openai.ChatCompletionToolParam{
 		Type: "function",
-		Function: openai.FunctionDefinitionParam{
+		openai.FunctionDefinitionParam{
 			Name:        "get_weather",
 			Description: openai.String("Get current weather information for a specific location"),
 			Parameters: openai.FunctionParameters{
@@ -85,7 +85,7 @@ func CreateWeatherTool() openai.ChatCompletionToolParam {
 func CreateCalculatorTool() openai.ChatCompletionToolParam {
 	return openai.ChatCompletionToolParam{
 		Type: "function",
-		Function: openai.FunctionDefinitionParam{
+		openai.FunctionDefinitionParam{
 			Name:        "calculate",
 			Description: openai.String("Perform basic arithmetic calculations"),
 			Parameters: openai.FunctionParameters{
@@ -106,7 +106,7 @@ func CreateCalculatorTool() openai.ChatCompletionToolParam {
 func CreateTimeTool() openai.ChatCompletionToolParam {
 	return openai.ChatCompletionToolParam{
 		Type: "function",
-		Function: openai.FunctionDefinitionParam{
+		openai.FunctionDefinitionParam{
 			Name:        "get_time",
 			Description: openai.String("Get current time and date information"),
 			Parameters: openai.FunctionParameters{
@@ -134,7 +134,7 @@ func CreateTimeTool() openai.ChatCompletionToolParam {
 func CreateTranslationTool() openai.ChatCompletionToolParam {
 	return openai.ChatCompletionToolParam{
 		Type: "function",
-		Function: openai.FunctionDefinitionParam{
+		openai.FunctionDefinitionParam{
 			Name:        "translate_text",
 			Description: openai.String("Translate text between different languages"),
 			Parameters: openai.FunctionParameters{
@@ -163,7 +163,7 @@ func CreateTranslationTool() openai.ChatCompletionToolParam {
 func CreateSearchTool() openai.ChatCompletionToolParam {
 	return openai.ChatCompletionToolParam{
 		Type: "function",
-		Function: openai.FunctionDefinitionParam{
+		openai.FunctionDefinitionParam{
 			Name:        "web_search",
 			Description: openai.String("Search the web for information"),
 			Parameters: openai.FunctionParameters{

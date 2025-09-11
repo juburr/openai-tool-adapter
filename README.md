@@ -6,7 +6,7 @@
 # OpenAI Tool Adapter
 
 [![Go Version](https://img.shields.io/badge/go-1.24+-blue.svg)](https://golang.org)
-[![Coverage](https://img.shields.io/badge/coverage-89.4%25-brightgreen.svg)](https://github.com/juburr/openai-tool-adapter)
+[![Coverage](https://img.shields.io/badge/coverage-89.3%25-brightgreen.svg)](https://github.com/juburr/openai-tool-adapter)
 [![Go Report Card](https://goreportcard.com/badge/github.com/juburr/openai-tool-adapter)](https://goreportcard.com/report/github.com/juburr/openai-tool-adapter)
 [![License: Apache2](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
@@ -14,7 +14,7 @@ A high-performance Go package that enables seamless function calling for Large L
 
 ## ✨ Key Features
 
-* **🔄 OpenAI SDK Compatible** - Uses official `github.com/openai/openai-go` types for seamless integration
+* **🔄 OpenAI SDK Compatible** - Uses official `github.com/openai/openai-go/v2` types for seamless integration
 * **⚡ Streaming & Unary Support** - Full compatibility with both standard and streaming chat completions
 * **🎯 Robust Response Parsing** - Finite state machine JSON extraction reliably handles diverse LLM response formats
 * **💬 Multi-turn Tool Conversations** - Automatic handling of `ToolMessage` results in conversation history
@@ -27,7 +27,7 @@ A high-performance Go package that enables seamless function calling for Large L
 ### Installation
 ```bash
 go get github.com/juburr/openai-tool-adapter
-go get github.com/openai/openai-go
+go get github.com/openai/openai-go/v2
 ```
 
 ### Basic Usage
@@ -44,8 +44,8 @@ import (
     "log"
     
     "github.com/juburr/openai-tool-adapter"
-    "github.com/openai/openai-go"
-    "github.com/openai/openai-go/option"
+    "github.com/openai/openai-go/v2"
+    "github.com/openai/openai-go/v2/option"
 )
 
 func main() {
