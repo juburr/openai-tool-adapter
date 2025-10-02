@@ -9,7 +9,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v3"
 )
 
 // ChatCompletionStreamInterface represents the streaming interface returned by OpenAI SDK

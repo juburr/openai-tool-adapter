@@ -115,7 +115,7 @@ This enables models like Gemma 3 (via vLLM) to understand tool results without n
 - `metrics.go`: Observability interfaces and event data structures
 - `idgen.go`: UUIDv7-based tool call ID generation
 
-### Testing (88.6% coverage)
+### Testing (89.6% coverage)
 - `adapter_test.go`: Core adapter functionality tests
 - `parser_test.go`: JSON parsing and state machine tests
 - `streaming_test.go`: Streaming functionality tests
@@ -226,7 +226,7 @@ This enables models like Gemma 3 (via vLLM) to understand tool results without n
 ## Dependencies
 
 ### Required
-- `github.com/openai/openai-go/v2` (official OpenAI SDK)
+- `github.com/openai/openai-go/v3` (official OpenAI SDK)
 - `github.com/google/uuid` (UUIDv7-based tool call ID generation)
 
 ### Development

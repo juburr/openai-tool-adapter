@@ -10,7 +10,7 @@ import (
 	"time"
 
 	tooladapter "github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v3"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )

@@ -7,7 +7,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v3"
 )
 
 // Benchmark sink variables to prevent compiler optimizations

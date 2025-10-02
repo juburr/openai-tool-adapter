@@ -7,7 +7,7 @@ import (
 	"time"
 
 	tooladapter "github.com/juburr/openai-tool-adapter"
-	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v3"
 )
 
 // BenchmarkMetrics_PerformanceImpact measures the performance impact of the metrics system

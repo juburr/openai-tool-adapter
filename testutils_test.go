@@ -1,7 +1,7 @@
 package tooladapter_test
 
 import (
-	"github.com/openai/openai-go/v2"
+	"github.com/openai/openai-go/v3"
 )
 
 // MockChatCompletionStream provides a simple mock for testing streaming functionality
