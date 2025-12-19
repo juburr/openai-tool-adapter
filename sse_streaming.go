@@ -34,6 +34,11 @@ type SSEStreamAdapter struct {
 	model        string
 	created      int64
 
+	// Extra fields from provider (captured from first chunk)
+	// These are preserved when emitting transformed tool call responses.
+	// Examples: "reasoning", "system_fingerprint", etc.
+	chunkExtraFields map[string]json.RawMessage
+
 	// Context for cancellation
 	ctx context.Context
 }
@@ -50,11 +55,20 @@ func (a *Adapter) NewSSEStreamAdapter(reader SSEStreamReader, writer SSEStreamWr
 }
 
 // captureMetadata captures metadata from the first chunk with a valid ID.
+// This includes both standard fields and any provider-specific extra fields.
 func (s *SSEStreamAdapter) captureMetadata(chunk *SSEChunk) {
 	if s.completionID == "" && chunk.ID != "" {
 		s.completionID = chunk.ID
 		s.model = chunk.Model
 		s.created = chunk.Created
+
+		// Capture extra fields from the first chunk (e.g., "reasoning", "system_fingerprint")
+		if len(chunk.ExtraFields) > 0 {
+			s.chunkExtraFields = make(map[string]json.RawMessage)
+			for k, v := range chunk.ExtraFields {
+				s.chunkExtraFields[k] = v
+			}
+		}
 	}
 }
 
@@ -92,12 +106,8 @@ func (s *SSEStreamAdapter) Process(ctx context.Context) error {
 
 		chunks = append(chunks, chunk)
 
-		// Capture metadata from first chunk
-		if s.completionID == "" && chunk.ID != "" {
-			s.completionID = chunk.ID
-			s.model = chunk.Model
-			s.created = chunk.Created
-		}
+		// Capture metadata from first chunk (including extra fields)
+		s.captureMetadata(chunk)
 
 		// Accumulate content
 		if len(chunk.Choices) > 0 && chunk.Choices[0].Delta.Content != "" {
@@ -231,12 +241,13 @@ func (s *SSEStreamAdapter) emitToolCallResponse(calls []RawFunctionCall, origina
 		}
 	}
 
-	// Emit tool call chunk
+	// Emit tool call chunk with preserved extra fields
 	toolChunk := &SSEChunk{
-		ID:      s.completionID,
-		Object:  "chat.completion.chunk",
-		Created: s.created,
-		Model:   s.model,
+		ID:          s.completionID,
+		Object:      "chat.completion.chunk",
+		Created:     s.created,
+		Model:       s.model,
+		ExtraFields: s.chunkExtraFields, // Preserve provider-specific fields
 		Choices: []SSEChoice{
 			{
 				Index: 0,
@@ -252,12 +263,13 @@ func (s *SSEStreamAdapter) emitToolCallResponse(calls []RawFunctionCall, origina
 		return err
 	}
 
-	// Emit finish chunk
+	// Emit finish chunk with preserved extra fields
 	finishChunk := &SSEChunk{
-		ID:      s.completionID,
-		Object:  "chat.completion.chunk",
-		Created: s.created,
-		Model:   s.model,
+		ID:          s.completionID,
+		Object:      "chat.completion.chunk",
+		Created:     s.created,
+		Model:       s.model,
+		ExtraFields: s.chunkExtraFields, // Preserve provider-specific fields
 		Choices: []SSEChoice{
 			{
 				Index:        0,
@@ -560,12 +572,13 @@ func (s *SSEStreamAdapter) WriteToolCallsFromResult(result *SSETransformResult) 
 		}
 	}
 
-	// Emit tool call chunk
+	// Emit tool call chunk with preserved extra fields
 	toolChunk := &SSEChunk{
-		ID:      s.completionID,
-		Object:  "chat.completion.chunk",
-		Created: s.created,
-		Model:   s.model,
+		ID:          s.completionID,
+		Object:      "chat.completion.chunk",
+		Created:     s.created,
+		Model:       s.model,
+		ExtraFields: s.chunkExtraFields, // Preserve provider-specific fields
 		Choices: []SSEChoice{
 			{
 				Index: 0,
@@ -581,12 +594,13 @@ func (s *SSEStreamAdapter) WriteToolCallsFromResult(result *SSETransformResult) 
 		return err
 	}
 
-	// Emit finish chunk
+	// Emit finish chunk with preserved extra fields
 	finishChunk := &SSEChunk{
-		ID:      s.completionID,
-		Object:  "chat.completion.chunk",
-		Created: s.created,
-		Model:   s.model,
+		ID:          s.completionID,
+		Object:      "chat.completion.chunk",
+		Created:     s.created,
+		Model:       s.model,
+		ExtraFields: s.chunkExtraFields, // Preserve provider-specific fields
 		Choices: []SSEChoice{
 			{
 				Index:        0,
