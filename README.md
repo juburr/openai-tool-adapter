@@ -6,7 +6,7 @@
 # OpenAI Tool Adapter
 
 [![Go Version](https://img.shields.io/badge/go-1.24+-blue.svg)](https://golang.org)
-[![Coverage](https://img.shields.io/badge/coverage-89.6%25-brightgreen.svg)](https://github.com/juburr/openai-tool-adapter)
+[![Coverage](https://img.shields.io/badge/coverage-89.3%25-brightgreen.svg)](https://github.com/juburr/openai-tool-adapter)
 [![Go Report Card](https://goreportcard.com/badge/github.com/juburr/openai-tool-adapter)](https://goreportcard.com/report/github.com/juburr/openai-tool-adapter)
 [![License: Apache2](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
