@@ -40,17 +40,14 @@ func TestEdgeCasesAndErrorHandling(t *testing.T) {
 		defer cancel()
 
 		// Create tool with invalid/malformed definition
-		invalidTool := openai.ChatCompletionFunctionTool(
-			Type: "function",
-			openai.FunctionDefinitionParam{
-				Name:        "invalid-tool-name-with-hyphens-and-special$chars!",
-				Description: openai.String("An invalid tool for testing"),
-				Parameters: openai.FunctionParameters{
-					"type": "object",
-					// Missing properties and other required fields
-				},
+		invalidTool := openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+			Name:        "invalid-tool-name-with-hyphens-and-special$chars!",
+			Description: openai.String("An invalid tool for testing"),
+			Parameters: openai.FunctionParameters{
+				"type": "object",
+				// Missing properties and other required fields
 			},
-		}
+		})
 
 		request := client.CreateToolRequest("Use the invalid tool", []openai.ChatCompletionToolUnionParam{invalidTool})
 
@@ -71,23 +68,20 @@ func TestEdgeCasesAndErrorHandling(t *testing.T) {
 		defer cancel()
 
 		// Create a tool that might receive very long arguments
-		longParamTool := openai.ChatCompletionFunctionTool(
-			Type: "function",
-			openai.FunctionDefinitionParam{
-				Name:        "process_text",
-				Description: openai.String("Process a long text input"),
-				Parameters: openai.FunctionParameters{
-					"type": "object",
-					"properties": map[string]interface{}{
-						"text": map[string]interface{}{
-							"type":        "string",
-							"description": "Long text to process",
-						},
+		longParamTool := openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+			Name:        "process_text",
+			Description: openai.String("Process a long text input"),
+			Parameters: openai.FunctionParameters{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"text": map[string]interface{}{
+						"type":        "string",
+						"description": "Long text to process",
 					},
-					"required": []string{"text"},
 				},
+				"required": []string{"text"},
 			},
-		}
+		})
 
 		// Create a moderately long message (reduced from 100 to 20 repetitions)
 		longText := strings.Repeat("This is a sentence that should be processed. ", 20)
@@ -317,22 +311,19 @@ func TestResourceLimitsAndSafety(t *testing.T) {
 		// Create many tools
 		var tools []openai.ChatCompletionToolUnionParam
 		for i := 0; i < 20; i++ {
-			tool := openai.ChatCompletionFunctionTool(
-				Type: "function",
-				openai.FunctionDefinitionParam{
-					Name:        fmt.Sprintf("test_function_%d", i),
-					Description: openai.String(fmt.Sprintf("Test function number %d", i)),
-					Parameters: openai.FunctionParameters{
-						"type": "object",
-						"properties": map[string]interface{}{
-							"param": map[string]interface{}{
-								"type":        "string",
-								"description": "A parameter",
-							},
+			tool := openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+				Name:        fmt.Sprintf("test_function_%d", i),
+				Description: openai.String(fmt.Sprintf("Test function number %d", i)),
+				Parameters: openai.FunctionParameters{
+					"type": "object",
+					"properties": map[string]interface{}{
+						"param": map[string]interface{}{
+							"type":        "string",
+							"description": "A parameter",
 						},
 					},
 				},
-			}
+			})
 			tools = append(tools, tool)
 		}
 

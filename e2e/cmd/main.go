@@ -9,11 +9,19 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
+	"os"
 
 	tooladapter "github.com/juburr/openai-tool-adapter/v3"
 	"github.com/openai/openai-go/v3"
 	"github.com/openai/openai-go/v3/option"
 )
+
+func getEnvOrDefault(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
+}
 
 type WeatherRequest struct {
 	Location string `json:"location" description:"The location to get weather for"`
@@ -48,28 +56,25 @@ func getWeather(location, unit string) WeatherResponse {
 }
 
 func createWeatherTool() openai.ChatCompletionToolUnionParam {
-	return openai.ChatCompletionFunctionTool(
-		Type: "function",
-		openai.FunctionDefinitionParam{
-			Name:        "get_weather",
-			Description: openai.String("Get current weather information for a specific location"),
-			Parameters: openai.FunctionParameters{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"location": map[string]interface{}{
-						"type":        "string",
-						"description": "The location to get weather for",
-					},
-					"unit": map[string]interface{}{
-						"type":        "string",
-						"enum":        []string{"celsius", "fahrenheit"},
-						"description": "Temperature unit: celsius or fahrenheit",
-					},
+	return openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+		Name:        "get_weather",
+		Description: openai.String("Get current weather information for a specific location"),
+		Parameters: openai.FunctionParameters{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"location": map[string]interface{}{
+					"type":        "string",
+					"description": "The location to get weather for",
 				},
-				"required": []string{"location"},
+				"unit": map[string]interface{}{
+					"type":        "string",
+					"enum":        []string{"celsius", "fahrenheit"},
+					"description": "Temperature unit: celsius or fahrenheit",
+				},
 			},
+			"required": []string{"location"},
 		},
-	}
+	})
 }
 
 func printOriginalRequest(params openai.ChatCompletionNewParams, verbose bool) {
@@ -134,7 +139,7 @@ func processToolCalls(completion openai.ChatCompletion, verbose bool) {
 	}
 }
 
-func processWeatherToolCall(toolCall openai.ChatCompletionMessageToolCall, verbose bool) {
+func processWeatherToolCall(toolCall openai.ChatCompletionMessageToolCallUnion, verbose bool) {
 	if toolCall.Function.Name != "get_weather" {
 		return
 	}
@@ -159,8 +164,8 @@ func main() {
 	flag.Parse()
 
 	client := openai.NewClient(
-		option.WithBaseURL("http://localhost:8000/v1"),
-		option.WithAPIKey("dummy-key"),
+		option.WithBaseURL(getEnvOrDefault("E2E_BASE_URL", "http://localhost:8000/v1")),
+		option.WithAPIKey(getEnvOrDefault("E2E_API_KEY", "dummy-key")),
 	)
 
 	logLevel := slog.LevelError
@@ -172,7 +177,7 @@ func main() {
 	weatherTool := createWeatherTool()
 
 	originalParams := openai.ChatCompletionNewParams{
-		Model: "google/gemma-3-4b-it",
+		Model: getEnvOrDefault("E2E_MODEL", "google/gemma-3-4b-it"),
 		Messages: []openai.ChatCompletionMessageParamUnion{
 			openai.UserMessage("What's the weather like in San Francisco?"),
 		},

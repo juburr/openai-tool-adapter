@@ -27,10 +27,11 @@ func TestDirectMultimodalWithoutAdapter(t *testing.T) {
 	base64String := base64.StdEncoding.EncodeToString(imageData)
 	t.Logf("Successfully encoded nvidia.jpg: %d bytes -> %d base64 chars", len(imageData), len(base64String))
 
-	// Create a direct OpenAI client (no adapter)
+	// Create a direct OpenAI client (no adapter) using config
+	config := LoadTestConfig()
 	client := openai.NewClient(
-		option.WithBaseURL("http://localhost:8000/v1"),
-		option.WithAPIKey("test-key"),
+		option.WithBaseURL(config.BaseURL),
+		option.WithAPIKey(config.APIKey),
 	)
 
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
@@ -57,7 +58,7 @@ func TestDirectMultimodalWithoutAdapter(t *testing.T) {
 
 		// Create request with NO TOOLS - just pure multimodal
 		req := openai.ChatCompletionNewParams{
-			Model: "google/gemma-3-4b-it",
+			Model: config.Model,
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage(parts),
 			},
@@ -71,7 +72,7 @@ func TestDirectMultimodalWithoutAdapter(t *testing.T) {
 
 			// Try a simple text-only request to confirm vLLM is working
 			textReq := openai.ChatCompletionNewParams{
-				Model: "google/gemma-3-4b-it",
+				Model: config.Model,
 				Messages: []openai.ChatCompletionMessageParamUnion{
 					openai.UserMessage("Say hello"),
 				},
@@ -133,7 +134,7 @@ func TestDirectMultimodalWithoutAdapter(t *testing.T) {
 		}
 
 		req := openai.ChatCompletionNewParams{
-			Model: "google/gemma-3-4b-it",
+			Model: config.Model,
 			Messages: []openai.ChatCompletionMessageParamUnion{
 				openai.UserMessage(parts),
 			},

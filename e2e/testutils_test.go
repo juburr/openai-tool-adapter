@@ -56,135 +56,120 @@ func NewTestClientWithVerboseLogging() *TestClient {
 }
 
 // CreateWeatherTool creates a standard weather tool for testing
-func CreateWeatherTool() openai.ChatCompletionToolParam {
-	return openai.ChatCompletionToolParam{
-		Type: "function",
-		openai.FunctionDefinitionParam{
-			Name:        "get_weather",
-			Description: openai.String("Get current weather information for a specific location"),
-			Parameters: openai.FunctionParameters{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"location": map[string]interface{}{
-						"type":        "string",
-						"description": "The location to get weather for",
-					},
-					"unit": map[string]interface{}{
-						"type":        "string",
-						"enum":        []string{"celsius", "fahrenheit"},
-						"description": "Temperature unit: celsius or fahrenheit",
-					},
+func CreateWeatherTool() openai.ChatCompletionToolUnionParam {
+	return openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+		Name:        "get_weather",
+		Description: openai.String("Get current weather information for a specific location"),
+		Parameters: openai.FunctionParameters{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"location": map[string]interface{}{
+					"type":        "string",
+					"description": "The location to get weather for",
 				},
-				"required": []string{"location"},
+				"unit": map[string]interface{}{
+					"type":        "string",
+					"enum":        []string{"celsius", "fahrenheit"},
+					"description": "Temperature unit: celsius or fahrenheit",
+				},
 			},
+			"required": []string{"location"},
 		},
-	}
+	})
 }
 
 // CreateCalculatorTool creates a calculator tool for testing
-func CreateCalculatorTool() openai.ChatCompletionToolParam {
-	return openai.ChatCompletionToolParam{
-		Type: "function",
-		openai.FunctionDefinitionParam{
-			Name:        "calculate",
-			Description: openai.String("Perform basic arithmetic calculations"),
-			Parameters: openai.FunctionParameters{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"expression": map[string]interface{}{
-						"type":        "string",
-						"description": "Mathematical expression to evaluate (e.g., '2+2', '10*5')",
-					},
+func CreateCalculatorTool() openai.ChatCompletionToolUnionParam {
+	return openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+		Name:        "calculate",
+		Description: openai.String("Perform basic arithmetic calculations"),
+		Parameters: openai.FunctionParameters{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"expression": map[string]interface{}{
+					"type":        "string",
+					"description": "Mathematical expression to evaluate (e.g., '2+2', '10*5')",
 				},
-				"required": []string{"expression"},
 			},
+			"required": []string{"expression"},
 		},
-	}
+	})
 }
 
 // CreateTimeTool creates a time/date tool for testing
-func CreateTimeTool() openai.ChatCompletionToolParam {
-	return openai.ChatCompletionToolParam{
-		Type: "function",
-		openai.FunctionDefinitionParam{
-			Name:        "get_time",
-			Description: openai.String("Get current time and date information"),
-			Parameters: openai.FunctionParameters{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"timezone": map[string]interface{}{
-						"type":        "string",
-						"description": "Timezone (e.g., 'UTC', 'EST', 'PST')",
-						"default":     "UTC",
-					},
-					"format": map[string]interface{}{
-						"type":        "string",
-						"description": "Time format ('12h' or '24h')",
-						"enum":        []string{"12h", "24h"},
-						"default":     "24h",
-					},
+func CreateTimeTool() openai.ChatCompletionToolUnionParam {
+	return openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+		Name:        "get_time",
+		Description: openai.String("Get current time and date information"),
+		Parameters: openai.FunctionParameters{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"timezone": map[string]interface{}{
+					"type":        "string",
+					"description": "Timezone (e.g., 'UTC', 'EST', 'PST')",
+					"default":     "UTC",
 				},
-				"required": []string{},
+				"format": map[string]interface{}{
+					"type":        "string",
+					"description": "Time format ('12h' or '24h')",
+					"enum":        []string{"12h", "24h"},
+					"default":     "24h",
+				},
 			},
+			"required": []string{},
 		},
-	}
+	})
 }
 
 // CreateTranslationTool creates a translation tool for testing
-func CreateTranslationTool() openai.ChatCompletionToolParam {
-	return openai.ChatCompletionToolParam{
-		Type: "function",
-		openai.FunctionDefinitionParam{
-			Name:        "translate_text",
-			Description: openai.String("Translate text between different languages"),
-			Parameters: openai.FunctionParameters{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"text": map[string]interface{}{
-						"type":        "string",
-						"description": "Text to translate",
-					},
-					"from_lang": map[string]interface{}{
-						"type":        "string",
-						"description": "Source language code (e.g., 'en', 'es', 'fr')",
-					},
-					"to_lang": map[string]interface{}{
-						"type":        "string",
-						"description": "Target language code (e.g., 'en', 'es', 'fr')",
-					},
+func CreateTranslationTool() openai.ChatCompletionToolUnionParam {
+	return openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+		Name:        "translate_text",
+		Description: openai.String("Translate text between different languages"),
+		Parameters: openai.FunctionParameters{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"text": map[string]interface{}{
+					"type":        "string",
+					"description": "Text to translate",
 				},
-				"required": []string{"text", "from_lang", "to_lang"},
+				"from_lang": map[string]interface{}{
+					"type":        "string",
+					"description": "Source language code (e.g., 'en', 'es', 'fr')",
+				},
+				"to_lang": map[string]interface{}{
+					"type":        "string",
+					"description": "Target language code (e.g., 'en', 'es', 'fr')",
+				},
 			},
+			"required": []string{"text", "from_lang", "to_lang"},
 		},
-	}
+	})
 }
 
 // CreateSearchTool creates a search tool for testing
-func CreateSearchTool() openai.ChatCompletionToolParam {
-	return openai.ChatCompletionToolParam{
-		Type: "function",
-		openai.FunctionDefinitionParam{
-			Name:        "web_search",
-			Description: openai.String("Search the web for information"),
-			Parameters: openai.FunctionParameters{
-				"type": "object",
-				"properties": map[string]interface{}{
-					"query": map[string]interface{}{
-						"type":        "string",
-						"description": "Search query string",
-					},
-					"limit": map[string]interface{}{
-						"type":        "integer",
-						"description": "Maximum number of results (1-10)",
-						"minimum":     1,
-						"maximum":     10,
-						"default":     5,
-					},
+func CreateSearchTool() openai.ChatCompletionToolUnionParam {
+	return openai.ChatCompletionFunctionTool(openai.FunctionDefinitionParam{
+		Name:        "web_search",
+		Description: openai.String("Search the web for information"),
+		Parameters: openai.FunctionParameters{
+			"type": "object",
+			"properties": map[string]interface{}{
+				"query": map[string]interface{}{
+					"type":        "string",
+					"description": "Search query string",
 				},
-				"required": []string{"query"},
+				"limit": map[string]interface{}{
+					"type":        "integer",
+					"description": "Maximum number of results (1-10)",
+					"minimum":     1,
+					"maximum":     10,
+					"default":     5,
+				},
 			},
+			"required": []string{"query"},
 		},
-	}
+	})
 }
 
 // CreateBasicRequest creates a basic chat request without tools
@@ -198,7 +183,7 @@ func (tc *TestClient) CreateBasicRequest(message string) openai.ChatCompletionNe
 }
 
 // CreateToolRequest creates a chat request with tools
-func (tc *TestClient) CreateToolRequest(message string, tools []openai.ChatCompletionToolParam) openai.ChatCompletionNewParams {
+func (tc *TestClient) CreateToolRequest(message string, tools []openai.ChatCompletionToolUnionParam) openai.ChatCompletionNewParams {
 	return openai.ChatCompletionNewParams{
 		Model: tc.config.Model,
 		Messages: []openai.ChatCompletionMessageParamUnion{

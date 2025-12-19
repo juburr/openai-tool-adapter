@@ -53,7 +53,8 @@ go mod tidy
 
 - **Adapter** (`adapter.go`): Main transformation engine that converts OpenAI requests/responses
 - **State Machine Parser** (`parser.go`): Robust JSON extraction from LLM responses using finite state machine
-- **Streaming Support** (`streaming.go`): Real-time tool call detection in streaming responses  
+- **Streaming Support** (`streaming.go`): Real-time tool call detection in streaming responses using OpenAI SDK streams
+- **Raw SSE Streaming** (`sse_streaming.go`, `sse_types.go`): Provider-agnostic SSE streaming for raw HTTP responses
 - **Metrics & Observability** (`metrics.go`): Type-safe metrics collection via observer pattern
 - **Configuration** (`options.go`): Flexible configuration system with pre-built option sets
 - **Multi-Choice Processing**: Support for OpenAI n > 1 parameter with independent choice processing
@@ -102,6 +103,45 @@ The adapter handles tool results in multi-turn conversations by automatically:
 
 This enables models like Gemma 3 (via vLLM) to understand tool results without native `ToolMessage` support.
 
+### Raw SSE Streaming
+
+The adapter provides raw SSE (Server-Sent Events) streaming support for processing HTTP response bodies directly without requiring OpenAI SDK stream wrappers. This is useful for:
+
+- **Proxy/Gateway implementations** that forward raw HTTP responses
+- **Custom LLM providers** that return OpenAI-compatible SSE responses
+- **Direct HTTP integrations** without SDK dependencies
+
+Key interfaces:
+- **`SSEStreamReader`**: Read SSE events from any source (HTTP response, io.Reader, etc.)
+- **`SSEStreamWriter`**: Write SSE events to HTTP response writers
+- **`SSEStreamAdapter`**: Process streams to detect and transform tool calls
+
+Usage example:
+```go
+// Create adapter with desired configuration
+adapter := tooladapter.New(
+    tooladapter.WithToolPolicy(tooladapter.ToolStopOnFirst),
+)
+
+// Create reader from HTTP response
+reader := tooladapter.NewHTTPSSEReader(resp)
+defer reader.Close()
+
+// Create writer for HTTP response
+writer := tooladapter.NewHTTPSSEWriter(w)
+
+// Process the stream
+sseAdapter := adapter.NewSSEStreamAdapter(reader, writer)
+if err := sseAdapter.Process(ctx); err != nil {
+    // handle error
+}
+```
+
+Processing modes:
+- **`Process()`**: Full buffering with tool detection
+- **`ProcessWithPassthrough()`**: Early detection optimization - passes through non-tool content faster
+- **`ProcessToResult()`**: Returns result for inspection before writing (useful for custom handling)
+
 ## Important Files
 
 ### Core Implementation
@@ -110,14 +150,17 @@ This enables models like Gemma 3 (via vLLM) to understand tool results without n
   - `logAndEmitFunctionCalls()`: Centralized logging and metrics emission
   - `applyToolPolicyToChoice()`: Policy application per choice
 - `parser.go`: State machine-based JSON extraction (critical for reliability)
-- `streaming.go`: Streaming response handling with real-time parsing
+- `streaming.go`: Streaming response handling with real-time parsing (OpenAI SDK streams)
+- `sse_streaming.go`: Raw SSE stream processing with tool detection and transformation
+- `sse_types.go`: SSE chunk types, reader/writer interfaces, and HTTP implementations
 - `options.go`: Configuration system with production/development presets
 - `metrics.go`: Observability interfaces and event data structures
 - `idgen.go`: UUIDv7-based tool call ID generation
 
-### Testing (89.6% coverage)
+### Testing
 - `adapter_test.go`: Core adapter functionality tests
 - `parser_test.go`: JSON parsing and state machine tests
+- `sse_streaming_test.go`: Raw SSE streaming tests with comprehensive coverage
 - `streaming_test.go`: Streaming functionality tests
 - `metrics_test.go`: Metrics system tests
 - `context_test.go`: Context handling tests

@@ -6,7 +6,7 @@
 # OpenAI Tool Adapter
 
 [![Go Version](https://img.shields.io/badge/go-1.24+-blue.svg)](https://golang.org)
-[![Coverage](https://img.shields.io/badge/coverage-89.3%25-brightgreen.svg)](https://github.com/juburr/openai-tool-adapter)
+[![Coverage](https://img.shields.io/badge/coverage-88.6%25-brightgreen.svg)](https://github.com/juburr/openai-tool-adapter)
 [![Go Report Card](https://goreportcard.com/badge/github.com/juburr/openai-tool-adapter)](https://goreportcard.com/report/github.com/juburr/openai-tool-adapter)
 [![License: Apache2](https://img.shields.io/badge/License-Apache_2.0-green.svg)](LICENSE)
 
@@ -188,12 +188,38 @@ for adaptedStream.Next() {
 }
 ```
 
+### Raw SSE Streaming
+
+For proxy/gateway implementations that work with raw HTTP responses instead of the OpenAI SDK, the adapter provides SSE streaming support:
+
+```go
+// Create adapter
+adapter := tooladapter.New(
+    tooladapter.WithToolPolicy(tooladapter.ToolDrainAll),
+    tooladapter.WithToolMaxCalls(8),
+)
+
+// Create reader from HTTP response and writer for client
+reader := tooladapter.NewHTTPSSEReader(resp)
+defer reader.Close()
+writer := tooladapter.NewHTTPSSEWriter(w)
+
+// Process stream with tool detection
+sseAdapter := adapter.NewSSEStreamAdapter(reader, writer)
+if err := sseAdapter.Process(ctx); err != nil {
+    return err
+}
+```
+
+See [SSE Streaming Guide](docs/SSE_STREAMING.md) for comprehensive documentation.
+
 ## 📖 Documentation
 
 ### Core Documentation
 - **[Architecture Guide](docs/ARCHITECTURE.md)** - System design and technical architecture
 - **[Configuration Options](docs/CONFIGURATION.md)** - Complete configuration reference
-- **[Streaming Guide](docs/STREAMING.md)** - Real-time processing and streaming support
+- **[Streaming Guide](docs/STREAMING.md)** - Real-time processing and streaming support (OpenAI SDK)
+- **[SSE Streaming Guide](docs/SSE_STREAMING.md)** - Raw SSE streaming for proxy/gateway implementations
 
 ### Advanced Topics
 - **[Observability](docs/LOGGING.md)** - Structured logging and operational events
