@@ -6,7 +6,7 @@ import (
 	"strings"
 	"testing"
 
-	tooladapter "github.com/juburr/openai-tool-adapter"
+	tooladapter "github.com/juburr/openai-tool-adapter/v2"
 	"github.com/openai/openai-go/v2"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"

@@ -7,7 +7,7 @@ import (
 	"log/slog"
 	"time"
 
-	tooladapter "github.com/juburr/openai-tool-adapter"
+	tooladapter "github.com/juburr/openai-tool-adapter/v2"
 	"github.com/openai/openai-go/v2"
 	"github.com/openai/openai-go/v2/option"
 )

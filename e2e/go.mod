@@ -5,8 +5,8 @@ module e2e
 go 1.24.5
 
 require (
-	github.com/juburr/openai-tool-adapter v0.0.0
-	github.com/openai/openai-go/v2 v2.4.1
+	github.com/juburr/openai-tool-adapter/v2 v2.0.0
+	github.com/openai/openai-go/v2 v2.7.1
 	github.com/stretchr/testify v1.11.1
 )
 
@@ -22,4 +22,4 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
-replace github.com/juburr/openai-tool-adapter => ../
+replace github.com/juburr/openai-tool-adapter/v2 => ../

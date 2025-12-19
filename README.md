@@ -26,7 +26,7 @@ A high-performance Go package that enables seamless function calling for Large L
 
 ### Installation
 ```bash
-go get github.com/juburr/openai-tool-adapter
+go get github.com/juburr/openai-tool-adapter/v2
 go get github.com/openai/openai-go/v2
 ```
 
@@ -43,7 +43,7 @@ import (
     "fmt"
     "log"
     
-    "github.com/juburr/openai-tool-adapter"
+    "github.com/juburr/openai-tool-adapter/v2"
     "github.com/openai/openai-go/v2"
     "github.com/openai/openai-go/v2/option"
 )

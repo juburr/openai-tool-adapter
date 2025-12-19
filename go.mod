@@ -1,10 +1,10 @@
-module github.com/juburr/openai-tool-adapter
+module github.com/juburr/openai-tool-adapter/v2
 
 go 1.24.5
 
 require (
 	github.com/google/uuid v1.6.0
-	github.com/openai/openai-go/v2 v2.4.1
+	github.com/openai/openai-go/v2 v2.7.1
 	github.com/stretchr/testify v1.11.1
 )
 
