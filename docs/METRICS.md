@@ -13,7 +13,7 @@ The metrics system emits structured events at key business operations, providing
 
 ```go
 import (
-	"github.com/juburr/openai-tool-adapter"
+	"github.com/juburr/openai-tool-adapter/v3"
     "log/slog"
     "time"
 )
